@@ -1,35 +1,36 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useEffect, useState } from 'react';
+import LoginForm from './components/LoginForm';
+import './App.css';
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [user, setUser] = useState(null);
+  const [dishes, setDishes] = useState([]);
+  const [ingredients, setIngredients] = useState([]);
+
+  useEffect(() => {
+    if (user) {
+      fetch('http://localhost:3001/api/dishes').then(res => res.json()).then(setDishes);
+      fetch('http://localhost:3001/api/ingredients').then(res => res.json()).then(data => {
+        setIngredients(data.ingredients);
+      });
+    }
+  }, [user]);
+
+  if (!user) return <LoginForm onLogin={setUser} />;
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
+    <div>
+      <h2>Welcome {user.username}</h2>
+      <h3>Dishes</h3>
+      <ul>
+        {dishes.map(d => <li key={d.id}>{d.name}</li>)}
+      </ul>
+      <h3>Ingredients</h3>
+      <ul>
+        {ingredients.map(i => <li key={i.id}>{i.name} ({i.price})</li>)}
+      </ul>
+    </div>
+  );
 }
 
-export default App
+export default App;
