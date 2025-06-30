@@ -1,71 +1,137 @@
-// API.js
-// Handles all API calls to the backend server
+import dayjs from 'dayjs';
 
-const API_URL = 'http://localhost:3001'; // Adjust if your backend runs on a different port
+const SERVER_URL = 'http://localhost:3001/api/';
 
-async function handleResponse(res) {
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.error || 'API Error');
-  }
-  return res.json();
+/**
+ * Utility function for parsing the HTTP response.
+ */
+function getJson(httpResponsePromise) {
+  return new Promise((resolve, reject) => {
+    httpResponsePromise
+      .then(response => {
+        if (response.ok) {
+          response.json()
+            .then(json => resolve(json))
+            .catch(() => reject({ error: "Cannot parse server response." }));
+        } else {
+          response.json()
+            .then(json => reject(json)) // error message in the response body
+            .catch(() => reject({ error: "Cannot parse server response." }));
+        }
+      })
+      .catch(() => reject({ error: "Cannot communicate with the server." }));
+  });
 }
 
-const API = {
-  // Fetch all base dishes
-  getDishes: async () => {
-    const res = await fetch(`${API_URL}/api/dishes`, { credentials: 'include' });
-    return handleResponse(res);
-  },
+//############################################################################
+// DISHES AND INGREDIENTS (PUBLIC)
+//############################################################################
 
-  // Fetch all ingredients
-  getIngredients: async () => {
-    const res = await fetch(`${API_URL}/api/ingredients`, { credentials: 'include' });
-    return handleResponse(res);
-  },
+// Fetch all base dishes with their sizes and prices
+const getDishes = async () => {
+  return getJson(
+    fetch(SERVER_URL + 'dishes', { credentials: 'include' })
+  );
+};
 
-  // User login (with optional TOTP)
-  login: async ({ username, password, totp }) => {
-    const res = await fetch(`${API_URL}/api/sessions`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ username, password, totp })
-    });
-    return handleResponse(res);
-  },
+// Fetch all ingredients with their prices, availability, and constraints
+const getIngredients = async () => {
+  return getJson(
+    fetch(SERVER_URL + 'ingredients', { credentials: 'include' })
+  );
+};
 
-  // Submit a new order
-  submitOrder: async (order) => {
-    const res = await fetch(`${API_URL}/api/orders`, {
+//############################################################################
+// ORDERS
+//############################################################################
+
+// Create a new order
+const createOrder = async (order) => {
+  return getJson(
+    fetch(SERVER_URL + 'orders', {
       method: 'POST',
       credentials: 'include',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(order)
-    });
-    return handleResponse(res);
-  },
+    })
+  );
+};
 
-  // Fetch user's orders
-  getUserOrders: async () => {
-    const res = await fetch(`${API_URL}/api/orders`, { credentials: 'include' });
-    return handleResponse(res);
-  },
+// Get user's order history
+const getOrders = async () => {
+  return getJson(
+    fetch(SERVER_URL + 'orders', { credentials: 'include' })
+  ).then(orders => orders.map(order => ({
+    ...order,
+    timestamp: order.timestamp ? dayjs(order.timestamp) : null,
+  })));
+};
 
-  // Fetch details for a single order
-  getOrderDetails: async (id) => {
-    const res = await fetch(`${API_URL}/api/orders/${id}`, { credentials: 'include' });
-    return handleResponse(res);
-  },
+// Cancel an order (requires 2FA)
+const cancelOrder = async (orderId) => {
+  return getJson(
+    fetch(SERVER_URL + `orders/${orderId}`, {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+  );
+};
 
-  // Cancel an order
-  cancelOrder: async (id) => {
-    const res = await fetch(`${API_URL}/api/orders/${id}/cancel`, {
+//############################################################################
+// AUTHENTICATION and 2FA
+//############################################################################
+
+// Log in a user with credentials
+const logIn = async (credentials) => {
+  return getJson(
+    fetch(SERVER_URL + 'sessions', {
       method: 'POST',
       credentials: 'include',
-    });
-    return handleResponse(res);
-  },
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(credentials)
+    })
+  );
+};
+
+// Verify a TOTP code for 2FA
+const logInTotp = async (code) => {
+  return getJson(
+    fetch(SERVER_URL + 'sessions/totp', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code })
+    })
+  );
+};
+
+// Log out the current user
+const logOut = async () => {
+  return getJson(
+    fetch(SERVER_URL + 'sessions/current', {
+      method: 'DELETE',
+      credentials: 'include'
+    })
+  );
+};
+
+// Fetch information about the currently logged-in user
+const getUserInfo = async () => {
+  return getJson(
+    fetch(SERVER_URL + 'sessions/current', { credentials: 'include' })
+  );
+};
+
+const API = {
+  getDishes,
+  getIngredients,
+  createOrder,
+  getOrders,
+  cancelOrder,
+  logIn,
+  logInTotp,
+  logOut,
+  getUserInfo,
 };
 
 export default API;

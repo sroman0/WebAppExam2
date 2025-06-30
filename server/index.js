@@ -13,6 +13,7 @@ const DishesDAO = require('./DAOs/dao-dishes');
 const IngredientsDAO = require('./DAOs/dao-ingredients');
 const OrdersDAO = require('./DAOs/dao-orders');
 const UsersDAO = require('./DAOs/dao-users');
+const { initDB } = require('./db');
 const LocalStrategy = require('passport-local').Strategy;
 const speakeasy = require('speakeasy');
 
@@ -93,10 +94,25 @@ app.get('/api/ingredients', async (req, res) => {
   }
 });
 
+// Middleware to check authentication
+const isAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).json({ error: 'Authentication required' });
+};
+
+// Middleware to check 2FA requirement for certain operations
+const requires2FA = (req, res, next) => {
+  if (req.isAuthenticated() && req.session.totpVerified) {
+    return next();
+  }
+  res.status(403).json({ error: '2FA verification required for this operation' });
+};
+
 // GET /api/orders - get all orders for the authenticated user
-app.get('/api/orders', async (req, res) => {
-  // For now, use a placeholder userId (replace with req.user.id after auth is implemented)
-  const userId = 1; // TODO: use req.user.id
+app.get('/api/orders', isAuthenticated, async (req, res) => {
+  const userId = req.user.id;
   try {
     const orders = await OrdersDAO.getOrdersByUser(userId);
     res.json(orders);
@@ -106,10 +122,14 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // GET /api/orders/:id - get details for a single order
-app.get('/api/orders/:id', async (req, res) => {
+app.get('/api/orders/:id', isAuthenticated, async (req, res) => {
   try {
     const order = await OrdersDAO.getOrderDetails(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found.' });
+    // Check if order belongs to current user
+    if (order.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
     res.json(order);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch order details.' });
@@ -117,27 +137,45 @@ app.get('/api/orders/:id', async (req, res) => {
 });
 
 // POST /api/orders - create a new order for the authenticated user
-app.post('/api/orders', async (req, res) => {
-  // For now, use a placeholder userId (replace with req.user.id after auth is implemented)
-  const userId = 1; // TODO: use req.user.id
-  const { dishId, size, ingredients, total } = req.body;
-  if (!dishId || !size || !Array.isArray(ingredients) || typeof total !== 'number') {
+app.post('/api/orders', isAuthenticated, async (req, res) => {
+  const userId = req.user.id;
+  const { dish_id, size, ingredients } = req.body;
+  
+  if (!dish_id || !size || !Array.isArray(ingredients)) {
     return res.status(400).json({ error: 'Invalid order data.' });
   }
+  
   try {
-    const orderId = await OrdersDAO.createOrder(userId, dishId, size, total, ingredients);
-    res.status(201).json({ orderId });
+    // Calculate total price
+    const sizePrice = { small: 5, medium: 7, large: 9 }[size] || 0;
+    const ingredientsData = await IngredientsDAO.getAllIngredients();
+    const selectedIngredients = ingredientsData.filter(ing => ingredients.includes(ing.id));
+    const ingredientsPrice = selectedIngredients.reduce((sum, ing) => sum + ing.price, 0);
+    const total = sizePrice + ingredientsPrice;
+    
+    // TODO: Add constraint validation here
+    
+    const orderId = await OrdersDAO.createOrder(userId, dish_id, size, total, ingredients);
+    res.status(201).json({ orderId, message: 'Order created successfully' });
   } catch (err) {
+    console.error('Order creation error:', err);
     res.status(500).json({ error: 'Failed to create order.' });
   }
 });
 
-// POST /api/orders/:id/cancel - cancel an order (requires 2FA, to be checked after auth is implemented)
-app.post('/api/orders/:id/cancel', async (req, res) => {
-  // For now, skip 2FA check; add after auth is implemented
+// DELETE /api/orders/:id - cancel an order (requires 2FA)
+app.delete('/api/orders/:id', requires2FA, async (req, res) => {
   try {
+    const order = await OrdersDAO.getOrderDetails(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+    
+    // Check if order belongs to current user
+    if (order.user_id !== req.user.id) {
+      return res.status(403).json({ error: 'Access denied.' });
+    }
+    
     await OrdersDAO.cancelOrder(req.params.id);
-    res.json({ message: 'Order cancelled.' });
+    res.json({ message: 'Order cancelled successfully.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to cancel order.' });
   }
@@ -145,48 +183,103 @@ app.post('/api/orders/:id/cancel', async (req, res) => {
 
 // POST /api/sessions - login (with optional TOTP)
 app.post('/api/sessions', (req, res, next) => {
-  passport.authenticate('local', async (err, user, info) => {
+  passport.authenticate('local', (err, user, info) => {
     if (err) {
-      console.log('Passport error:', err);
+      console.error('Passport error:', err);
       return next(err);
     }
     if (!user) {
       console.log('No user after passport.authenticate:', info);
-      return res.status(401).json({ error: info && info.message ? info.message : 'Unauthorized' });
+      return res.status(401).json({ error: info?.message || 'Invalid credentials' });
     }
-    // If user has 2FA, check TOTP
-    if (user.has2FA) {
-      const { totp } = req.body;
-      if (!totp) {
-        console.log('2FA required but not provided');
-        return res.status(401).json({ require2FA: true });
+    
+    req.logIn(user, (err) => {
+      if (err) return next(err);
+      
+      // Check if user has 2FA enabled
+      if (user.totp_required) {
+        // Store pending 2FA status in session
+        req.session.pending2FA = true;
+        req.session.pendingUserId = user.id;
+        req.session.totpVerified = false;
+        return res.json({ 
+          canDoTotp: true, 
+          user: { 
+            id: user.id, 
+            name: user.username,
+            username: user.username 
+          } 
+        });
+      } else {
+        // No 2FA required, return user info
+        req.session.totpVerified = false;
+        return res.json({ 
+          user: { 
+            id: user.id, 
+            name: user.username,
+            username: user.username, 
+            isTotp: false 
+          } 
+        });
       }
-      const verified = speakeasy.totp.verify({
-        secret: 'LXBSMDTMSP2I5XFXIYRGFVWSFI',
-        encoding: 'base32',
-        token: totp
-      });
-      if (!verified) {
-        console.log('Invalid 2FA code');
-        return res.status(401).json({ error: 'Invalid 2FA code.' });
-      }
-    }
-    req.login(user, (err) => {
-      if (err) {
-        console.log('req.login error:', err);
-        return next(err);
-      }
-      console.log('Login successful, session established for user:', user.username);
-      res.json({ id: user.id, username: user.username, require2FA: !!user.has2FA });
     });
   })(req, res, next);
+});
+
+// POST /api/sessions/totp - verify TOTP code
+app.post('/api/sessions/totp', async (req, res) => {
+  const { code } = req.body;
+  
+  if (!req.session.pending2FA || !req.session.pendingUserId) {
+    return res.status(400).json({ error: 'No pending 2FA verification' });
+  }
+  
+  try {
+    // Use the secret from the exam specification
+    const secret = 'LXBSMDTMSP2I5XFXIYRGFVWSFI';
+    
+    const verified = speakeasy.totp.verify({
+      secret: secret,
+      encoding: 'base32',
+      token: code,
+      window: 2 // Allow some time drift
+    });
+    
+    if (verified) {
+      // Mark 2FA as verified
+      req.session.totpVerified = true;
+      req.session.pending2FA = false;
+      
+      const user = await UsersDAO.getUserById(req.session.pendingUserId);
+      delete req.session.pendingUserId;
+      
+      res.json({ 
+        message: '2FA verified successfully',
+        user: {
+          id: user.id,
+          name: user.username,
+          username: user.username,
+          isTotp: true
+        }
+      });
+    } else {
+      res.status(401).json({ error: 'Invalid TOTP code' });
+    }
+  } catch (err) {
+    console.error('TOTP verification error:', err);
+    res.status(500).json({ error: 'TOTP verification failed' });
+  }
 });
 
 // GET /api/sessions/current - get current user
 app.get('/api/sessions/current', (req, res) => {
   if (req.isAuthenticated()) {
-    const { id, username, isAdmin, has2FA } = req.user;
-    res.json({ id, username, isAdmin, has2FA });
+    res.json({ 
+      id: req.user.id, 
+      name: req.user.username,
+      username: req.user.username, 
+      isTotp: req.session.totpVerified || false 
+    });
   } else {
     res.status(401).json({ error: 'Not authenticated' });
   }
@@ -194,8 +287,12 @@ app.get('/api/sessions/current', (req, res) => {
 
 // DELETE /api/sessions/current - logout
 app.delete('/api/sessions/current', (req, res) => {
-  req.logout(() => {
-    res.json({ message: 'Logged out' });
+  req.logout((err) => {
+    if (err) return res.status(500).json({ error: 'Logout failed' });
+    req.session.destroy((err) => {
+      if (err) return res.status(500).json({ error: 'Session destruction failed' });
+      res.json({ message: 'Logged out successfully' });
+    });
   });
 });
 
@@ -203,6 +300,19 @@ app.get('/', (req, res) => {
   res.json({ message: 'Restaurant API running.' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// Initialize database and start server
+async function startServer() {
+  try {
+    await initDB();
+    console.log('Database initialized successfully');
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();

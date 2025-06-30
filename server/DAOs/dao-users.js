@@ -11,12 +11,13 @@ async function getUserByUsername(username) {
 // Get user by id
 async function getUserById(id) {
   const sql = 'SELECT * FROM users WHERE id = ?';
-  return await db.get(sql, [id]);
+  const user = await db.get(sql, [id]);
+  return user;
 }
 
 // Verify password (hashed)
 async function verifyPassword(user, password) {
-  if (!user) return false;
+  if (!user || !user.password) return false;
   return await bcrypt.compare(password, user.password);
 }
 

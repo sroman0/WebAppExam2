@@ -1,42 +1,211 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
 }
 
-@keyframes logo-spin {
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #ff6b6b;
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #ff4757;
+}
+
+/* Smooth transitions */
+.btn, .card, .form-control, .form-select {
+  transition: all 0.2s ease-in-out;
+}
+
+.btn:hover {
+  transform: translateY(-1px);
+}
+
+.card:hover {
+  transform: translateY(-2px);
+}
+
+/* Custom focus styles */
+.form-control:focus, .form-select:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+}
+
+/* Custom checkbox styles */
+.form-check-input:checked {
+  background-color: #ff4757;
+  border-color: #ff4757;
+}
+
+.form-check-input:focus {
+  border-color: #ff6b6b;
+  box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+}
+
+/* Gradient text */
+.gradient-text {
+  background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Sticky positioning for order summary */
+.sticky-top {
+  top: 100px !important;
+}
+
+/* Loading spinner colors */
+.spinner-border-primary {
+  color: #ff4757;
+}
+
+/* Badge variations */
+.badge.bg-primary {
+  background-color: #ff4757 !important;
+}
+
+.badge.bg-secondary {
+  background-color: #6c757d !important;
+}
+
+/* Custom alert styles */
+.alert {
+  border: none;
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* Hover effects for interactive elements */
+.list-group-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Custom modal styles */
+.modal-content {
+  border-radius: 15px;
+  border: none;
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive design improvements */
+@media (max-width: 768px) {
+  .container-fluid {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
+  
+  .card-body {
+    padding: 1rem !important;
+  }
+  
+  .display-4 {
+    font-size: 2rem;
+  }
+}
+
+/* Animation for success messages */
+@keyframes fadeIn {
   from {
-    transform: rotate(0deg);
+    opacity: 0;
+    transform: translateY(-10px);
   }
   to {
-    transform: rotate(360deg);
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.alert {
+  animation: fadeIn 0.3s ease-in-out;
 }
 
+/* Custom button focus styles */
+.btn:focus {
+  box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+}
+
+/* Ingredient constraint indicators */
+.constraint-indicator {
+  font-size: 0.75rem;
+  opacity: 0.8;
+}
+
+/* Order status badges */
+.badge.bg-success {
+  background-color: #28a745 !important;
+}
+
+.badge.bg-danger {
+  background-color: #dc3545 !important;
+}
+
+.badge.bg-warning {
+  background-color: #ffc107 !important;
+  color: #212529 !important;
+}
+
+/* Improved form styling */
+.form-control, .form-select {
+  border: 1px solid #dee2e6;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:hover, .form-select:hover {
+  border-color: #ff6b6b;
+}
+
+/* Card hover effects */
 .card {
-  padding: 2em;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 
-.read-the-docs {
-  color: #888;
+.card:hover {
+  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Navigation improvements */
+.navbar-brand:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease-in-out;
+}
+
+/* Order configurator specific styles */
+.order-configurator .ingredient-item {
+  border-radius: 8px;
+  transition: background-color 0.2s ease-in-out;
+}
+
+.order-configurator .ingredient-item:hover {
+  background-color: #f8f9fa;
+}
+
+/* Price display */
+.price-display {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #28a745;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 576px) {
+  .btn-group-vertical .btn {
+    font-size: 0.875rem;
+  }
+  
+  .card-header h5 {
+    font-size: 1rem;
+  }
+  
+  .modal-dialog {
+    margin: 0.5rem;
+  }
 }

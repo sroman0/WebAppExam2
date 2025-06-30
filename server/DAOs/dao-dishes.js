@@ -2,9 +2,9 @@ const db = require('../db');
 
 // Get all dishes with their sizes and prices
 async function getAllDishes() {
-  const sql = `SELECT d.id as dishId, d.name as dishName, s.size, s.price, s.max_ingredients
-               FROM dishes d JOIN dish_sizes s ON d.id = s.dish_id
-               ORDER BY d.id, s.id`;
+  const sql = `SELECT d.id as dishId, d.name as dishName, ds.size, ds.price, ds.max_ingredients
+               FROM dishes d JOIN dish_sizes ds ON d.id = ds.dish_id
+               ORDER BY d.id, ds.id`;
   const rows = await db.all(sql);
   // Group by dish
   const dishes = [];

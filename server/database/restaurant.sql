@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS users (
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL, -- hashed
   isAdmin INTEGER DEFAULT 0,
-  has2FA INTEGER DEFAULT 0
+  totp_required INTEGER DEFAULT 0
 );
 
 -- Dishes table (pizza, pasta, salad)
@@ -118,7 +118,7 @@ INSERT INTO ingredient_dependencies (ingredient_id, required_ingredient_id) VALU
   (6, 5);
 
 -- Insert users (passwords are bcrypt hashes for 'password')
-INSERT INTO users (id, username, password, isAdmin, has2FA) VALUES
+INSERT INTO users (id, username, password, isAdmin, totp_required) VALUES
   (1, 'alice', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 1),
   (2, 'bob', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 0),
   (3, 'carol', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 1),
