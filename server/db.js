@@ -2,6 +2,30 @@ const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const path = require('path');
 
+// Open the SQLite database with async/await support
+const dbPromise = open({
+  filename: path.join(__dirname, 'database', 'restaurant.sqlite'),
+  driver: sqlite3.Database
+});
+
+// Helper to run a query and return all rows
+async function all(sql, params) {
+  const db = await dbPromise;
+  return db.all(sql, params);
+}
+
+// Helper to run a query and return a single row
+async function get(sql, params) {
+  const db = await dbPromise;
+  return db.get(sql, params);
+}
+
+// Helper to run a query (insert/update/delete)
+async function run(sql, params) {
+  const db = await dbPromise;
+  return db.run(sql, params);
+}
+
 async function initDB() {
   const db = await open({
     filename: path.join(__dirname, 'restaurant.db'),
@@ -125,4 +149,9 @@ async function initDB() {
   return db;
 }
 
-module.exports = initDB;
+module.exports = {
+  initDB,
+  all,
+  get,
+  run,
+};

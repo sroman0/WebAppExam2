@@ -10,12 +10,14 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "connect-sqlite3": "^0.9.16",
     "cors": "^2.8.5",
     "express": "^5.1.0",
     "express-session": "^1.18.1",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "speakeasy": "^2.0.0",
+    "sqlite": "^5.1.1",
     "sqlite3": "^5.1.7"
   }
 }

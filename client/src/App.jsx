@@ -1,35 +1,38 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
+import { Routes, Route } from 'react-router-dom';
+import { Container } from 'react-bootstrap';
+import Layout from './components/Layout';
+import IngredientList from './components/IngredientList';
+import OrderConfigurator from './components/OrderConfigurator';
+import OrderHistory from './components/OrderHistory';
+import OrderDetails from './components/OrderDetails';
 import LoginForm from './components/LoginForm';
+import DishList from './components/DishList';
+import NavigationBar from './components/NavigationBar';
+import 'bootstrap/dist/css/bootstrap.min.css';
 import './App.css';
 
 function App() {
   const [user, setUser] = useState(null);
-  const [dishes, setDishes] = useState([]);
-  const [ingredients, setIngredients] = useState([]);
 
-  useEffect(() => {
-    if (user) {
-      fetch('http://localhost:3001/api/dishes').then(res => res.json()).then(setDishes);
-      fetch('http://localhost:3001/api/ingredients').then(res => res.json()).then(data => {
-        setIngredients(data.ingredients);
-      });
-    }
-  }, [user]);
-
-  if (!user) return <LoginForm onLogin={setUser} />;
-
-  return (
-    <div>
-      <h2>Welcome {user.username}</h2>
-      <h3>Dishes</h3>
-      <ul>
-        {dishes.map(d => <li key={d.id}>{d.name}</li>)}
-      </ul>
-      <h3>Ingredients</h3>
-      <ul>
-        {ingredients.map(i => <li key={i.id}>{i.name} ({i.price})</li>)}
-      </ul>
-    </div>
+  return user ? (
+    <>
+      <NavigationBar />
+      <Container className="mt-4">
+        <Layout>
+          <Routes>
+            <Route path="/" element={<DishList />} />
+            <Route path="/ingredients" element={<IngredientList />} />
+            <Route path="/order" element={<OrderConfigurator />} />
+            <Route path="/orders" element={<OrderHistory />} />
+            <Route path="/orders/:id" element={<OrderDetails />} />
+            <Route path="/login" element={<LoginForm onLogin={setUser} />} />
+          </Routes>
+        </Layout>
+      </Container>
+    </>
+  ) : (
+    <LoginForm onLogin={setUser} />
   );
 }
 

@@ -1,113 +1,208 @@
 'use strict';
 
+// Express server for the restaurant web application
 const express = require('express');
+const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
+const SQLiteStore = require('connect-sqlite3')(session);
+const path = require('path');
+
+
+const DishesDAO = require('./DAOs/dao-dishes');
+const IngredientsDAO = require('./DAOs/dao-ingredients');
+const OrdersDAO = require('./DAOs/dao-orders');
+const UsersDAO = require('./DAOs/dao-users');
 const LocalStrategy = require('passport-local').Strategy;
-const bcrypt = require('bcrypt');
-const cors = require('cors');
 const speakeasy = require('speakeasy');
 
-const initDB = require('./db');
-
 const app = express();
-const port = 3001;
+const PORT = 3001;
 
-app.use(cors({ origin: 'http://localhost:5173', credentials: true }));
+// CORS configuration for client-server separation
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json());
 
+// Session management
 app.use(session({
-  secret: 'secret',
+  secret: 'a-very-secret-key', // Change in production
   resave: false,
-  saveUninitialized: false
+  saveUninitialized: false,
+  store: new SQLiteStore({ db: 'sessions.sqlite', dir: path.join(__dirname, 'database') }),
+  cookie: { maxAge: 60 * 60 * 1000 } // 1 hour
 }));
+
+// Passport.js setup (to be configured)
 app.use(passport.initialize());
 app.use(passport.session());
 
-let db;
-initDB().then((d) => { db = d; });
-
-passport.use(new LocalStrategy(async (username, password, cb) => {
+// Passport local strategy for username/password
+passport.use(new LocalStrategy(async (username, password, done) => {
   try {
-    const user = await db.get('SELECT * FROM users WHERE username=?', [username]);
-    if (!user) return cb(null, false, 'Incorrect username');
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return cb(null, false, 'Incorrect password');
-    return cb(null, user);
+    const user = await UsersDAO.getUserByUsername(username);
+    console.log('Login attempt:', username, !!user);
+    if (!user) return done(null, false, { message: 'Incorrect username.' });
+    const valid = await UsersDAO.verifyPassword(user, password);
+    console.log('Password valid:', valid);
+    if (!valid) return done(null, false, { message: 'Incorrect password.' });
+    return done(null, user);
   } catch (err) {
-    return cb(err);
+    return done(err);
   }
 }));
 
-passport.serializeUser((user, cb) => cb(null, user.id));
-passport.deserializeUser(async (id, cb) => {
+passport.serializeUser((user, done) => {
+  done(null, user.id);
+});
+passport.deserializeUser(async (id, done) => {
   try {
-    const user = await db.get('SELECT * FROM users WHERE id=?', [id]);
-    cb(null, user);
+    const user = await UsersDAO.getUserById(id); // fixed: use correct DAO function
+    done(null, user);
   } catch (err) {
-    cb(err);
+    done(err, null);
   }
 });
 
-function isLoggedIn(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  return res.status(401).json({ error: 'not authenticated' });
-}
+// API routes (to be implemented)
+// app.use('/api/sessions', authRoutes);
+// app.use('/api/dishes', dishRoutes);
+// app.use('/api/ingredients', ingredientRoutes);
+// app.use('/api/orders', orderRoutes);
 
-app.post('/api/login', passport.authenticate('local'), (req, res) => {
-  res.json({ id: req.user.id, username: req.user.username, totp_required: req.user.totp_required });
-});
-
-app.post('/api/logout', (req, res) => {
-  req.logout(() => res.end());
-});
-
+// GET /api/dishes - get all base dishes with sizes and prices
 app.get('/api/dishes', async (req, res) => {
-  const rows = await db.all('SELECT * FROM base_dishes');
-  res.json(rows);
+  try {
+    const dishes = await DishesDAO.getAllDishes();
+    res.json(dishes);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch dishes.' });
+  }
 });
 
+// GET /api/ingredients - get all ingredients with constraints and availability
 app.get('/api/ingredients', async (req, res) => {
-  const ingredients = await db.all('SELECT * FROM ingredients');
-  const requires = await db.all('SELECT * FROM ingredient_requires');
-  const inc = await db.all('SELECT * FROM ingredient_incompatible');
-  res.json({ ingredients, requires, incompatible: inc });
+  try {
+    const ingredients = await IngredientsDAO.getAllIngredients();
+    res.json(ingredients);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch ingredients.' });
+  }
 });
 
-app.get('/api/orders', isLoggedIn, async (req, res) => {
-  const orders = await db.all('SELECT * FROM orders WHERE user_id=?', [req.user.id]);
-  for (const order of orders) {
-    order.items = await db.all('SELECT * FROM order_items WHERE order_id=?', [order.id]);
-    for (const item of order.items) {
-      item.ingredients = await db.all('SELECT ingredient_id FROM order_item_ingredients WHERE order_item_id=?', [item.id]);
+// GET /api/orders - get all orders for the authenticated user
+app.get('/api/orders', async (req, res) => {
+  // For now, use a placeholder userId (replace with req.user.id after auth is implemented)
+  const userId = 1; // TODO: use req.user.id
+  try {
+    const orders = await OrdersDAO.getOrdersByUser(userId);
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch orders.' });
+  }
+});
+
+// GET /api/orders/:id - get details for a single order
+app.get('/api/orders/:id', async (req, res) => {
+  try {
+    const order = await OrdersDAO.getOrderDetails(req.params.id);
+    if (!order) return res.status(404).json({ error: 'Order not found.' });
+    res.json(order);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch order details.' });
+  }
+});
+
+// POST /api/orders - create a new order for the authenticated user
+app.post('/api/orders', async (req, res) => {
+  // For now, use a placeholder userId (replace with req.user.id after auth is implemented)
+  const userId = 1; // TODO: use req.user.id
+  const { dishId, size, ingredients, total } = req.body;
+  if (!dishId || !size || !Array.isArray(ingredients) || typeof total !== 'number') {
+    return res.status(400).json({ error: 'Invalid order data.' });
+  }
+  try {
+    const orderId = await OrdersDAO.createOrder(userId, dishId, size, total, ingredients);
+    res.status(201).json({ orderId });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to create order.' });
+  }
+});
+
+// POST /api/orders/:id/cancel - cancel an order (requires 2FA, to be checked after auth is implemented)
+app.post('/api/orders/:id/cancel', async (req, res) => {
+  // For now, skip 2FA check; add after auth is implemented
+  try {
+    await OrdersDAO.cancelOrder(req.params.id);
+    res.json({ message: 'Order cancelled.' });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to cancel order.' });
+  }
+});
+
+// POST /api/sessions - login (with optional TOTP)
+app.post('/api/sessions', (req, res, next) => {
+  passport.authenticate('local', async (err, user, info) => {
+    if (err) {
+      console.log('Passport error:', err);
+      return next(err);
     }
-  }
-  res.json(orders);
+    if (!user) {
+      console.log('No user after passport.authenticate:', info);
+      return res.status(401).json({ error: info && info.message ? info.message : 'Unauthorized' });
+    }
+    // If user has 2FA, check TOTP
+    if (user.has2FA) {
+      const { totp } = req.body;
+      if (!totp) {
+        console.log('2FA required but not provided');
+        return res.status(401).json({ require2FA: true });
+      }
+      const verified = speakeasy.totp.verify({
+        secret: 'LXBSMDTMSP2I5XFXIYRGFVWSFI',
+        encoding: 'base32',
+        token: totp
+      });
+      if (!verified) {
+        console.log('Invalid 2FA code');
+        return res.status(401).json({ error: 'Invalid 2FA code.' });
+      }
+    }
+    req.login(user, (err) => {
+      if (err) {
+        console.log('req.login error:', err);
+        return next(err);
+      }
+      console.log('Login successful, session established for user:', user.username);
+      res.json({ id: user.id, username: user.username, require2FA: !!user.has2FA });
+    });
+  })(req, res, next);
 });
 
-app.post('/api/orders', isLoggedIn, async (req, res) => {
-  const { baseDish, size, ingredients } = req.body;
-  const result = await db.run('INSERT INTO orders (user_id, date) VALUES (?, datetime("now"))', [req.user.id]);
-  const orderId = result.lastID;
-  const priceBase = { Small: 5, Medium: 7, Large: 9 }[size];
-  const item = await db.run('INSERT INTO order_items (order_id, base_dish, size, price) VALUES (?,?,?,?)', [orderId, baseDish, size, priceBase]);
-  const itemId = item.lastID;
-  for (const ing of ingredients) {
-    await db.run('INSERT INTO order_item_ingredients (order_item_id, ingredient_id) VALUES (?,?)', [itemId, ing]);
+// GET /api/sessions/current - get current user
+app.get('/api/sessions/current', (req, res) => {
+  if (req.isAuthenticated()) {
+    const { id, username, isAdmin, has2FA } = req.user;
+    res.json({ id, username, isAdmin, has2FA });
+  } else {
+    res.status(401).json({ error: 'Not authenticated' });
   }
-  res.json({ orderId });
 });
 
-app.post('/api/orders/:id/cancel', isLoggedIn, async (req, res) => {
-  const order = await db.get('SELECT * FROM orders WHERE id=? AND user_id=?', [req.params.id, req.user.id]);
-  if (!order) return res.status(404).end();
-  if (req.user.totp_required) {
-    const { token } = req.body;
-    const verified = speakeasy.totp.verify({ secret: 'LXBSMDTMSP2I5XFXIYRGFVWSFI', encoding: 'base32', token });
-    if (!verified) return res.status(401).json({ error: 'invalid token' });
-  }
-  await db.run('UPDATE orders SET cancelled=1 WHERE id=?', [order.id]);
-  res.end();
+// DELETE /api/sessions/current - logout
+app.delete('/api/sessions/current', (req, res) => {
+  req.logout(() => {
+    res.json({ message: 'Logged out' });
+  });
 });
 
-app.listen(port, () => console.log(`Server listening at http://localhost:${port}`));
+app.get('/', (req, res) => {
+  res.json({ message: 'Restaurant API running.' });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
