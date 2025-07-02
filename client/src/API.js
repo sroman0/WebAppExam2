@@ -105,6 +105,17 @@ const logInTotp = async (code) => {
   );
 };
 
+// Skip TOTP verification and proceed without 2FA
+const skipTotp = async () => {
+  return getJson(
+    fetch(SERVER_URL + 'sessions/skip-totp', {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' }
+    })
+  );
+};
+
 // Log out the current user
 const logOut = async () => {
   return getJson(
@@ -130,6 +141,7 @@ const API = {
   cancelOrder,
   logIn,
   logInTotp,
+  skipTotp,
   logOut,
   getUserInfo,
 };

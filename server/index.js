@@ -240,32 +240,18 @@ app.post('/api/sessions', (req, res, next) => {
     req.logIn(user, (err) => {
       if (err) return next(err);
       
-      // Check if user has 2FA enabled
-      if (user.totp_required) {
-        // Store pending 2FA status in session
-        req.session.pending2FA = true;
-        req.session.pendingUserId = user.id;
-        req.session.totpVerified = false;
-        return res.json({ 
-          canDoTotp: true, 
-          user: { 
-            id: user.id, 
-            name: user.username,
-            username: user.username 
-          } 
-        });
-      } else {
-        // No 2FA required, return user info
-        req.session.totpVerified = false;
-        return res.json({ 
-          user: { 
-            id: user.id, 
-            name: user.username,
-            username: user.username, 
-            isTotp: false 
-          } 
-        });
-      }
+      // Always offer 2FA option to all users after successful login
+      req.session.pending2FA = true;
+      req.session.pendingUserId = user.id;
+      req.session.totpVerified = false;
+      return res.json({ 
+        canDoTotp: true, 
+        user: { 
+          id: user.id, 
+          name: user.username,
+          username: user.username 
+        } 
+      });
     });
   })(req, res, next);
 });
@@ -312,6 +298,35 @@ app.post('/api/sessions/totp', async (req, res) => {
   } catch (err) {
     console.error('TOTP verification error:', err);
     res.status(500).json({ error: 'TOTP verification failed' });
+  }
+});
+
+// POST /api/sessions/skip-totp - skip TOTP verification and proceed without 2FA
+app.post('/api/sessions/skip-totp', async (req, res) => {
+  if (!req.session.pending2FA || !req.session.pendingUserId) {
+    return res.status(400).json({ error: 'No pending 2FA verification' });
+  }
+  
+  try {
+    // Mark as skipped 2FA (not verified but allowed to proceed)
+    req.session.totpVerified = false;
+    req.session.pending2FA = false;
+    
+    const user = await UsersDAO.getUserById(req.session.pendingUserId);
+    delete req.session.pendingUserId;
+    
+    res.json({ 
+      message: 'Proceeded without 2FA',
+      user: {
+        id: user.id,
+        name: user.username,
+        username: user.username,
+        isTotp: false
+      }
+    });
+  } catch (err) {
+    console.error('Skip TOTP error:', err);
+    res.status(500).json({ error: 'Failed to skip TOTP' });
   }
 });
 

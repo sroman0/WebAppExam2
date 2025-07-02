@@ -472,7 +472,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
                     }}
                   >
                     <i className="bi bi-cart-check me-2"></i>
-                    Submit Order (€{getTotalPrice().toFixed(2)})
+                    Submit Order
                   </Button>
                 </div>
               </Card.Body>

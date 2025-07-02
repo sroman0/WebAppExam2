@@ -12,6 +12,7 @@ import { MenuLayout, LoginLayout, OrderLayout, OrderHistoryLayout, NotFoundLayou
 function App() {
   // State management
   const [user, setUser] = useState(null);
+  const [showTotpChoice, setShowTotpChoice] = useState(false);
   const [totpRequired, setTotpRequired] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
   const [message, setMessage] = useState('');
@@ -31,7 +32,8 @@ function App() {
     try {
       const res = await API.logIn(credentials);
       if (res.canDoTotp) {
-        setTotpRequired(true);
+        setShowTotpChoice(true);
+        setTotpRequired(false);
         setPendingUser(res.user);
         setMessage('');
       } else {
@@ -41,10 +43,22 @@ function App() {
       }
     } catch (err) {
       setUser(null);
+      setShowTotpChoice(false);
       setTotpRequired(false);
       setPendingUser(null);
       setMessage('');
       throw new Error(err.error || 'Login failed. Please check your credentials.');
+    }
+  }
+
+  // Handle user's choice about 2FA
+  function handleTotpChoice(enable2FA) {
+    if (enable2FA) {
+      setShowTotpChoice(false);
+      setTotpRequired(true);
+    } else {
+      // User chose to skip 2FA entirely
+      handleSkipTotp();
     }
   }
 
@@ -54,6 +68,7 @@ function App() {
       await API.logInTotp(code);
       const u = await API.getUserInfo();
       setUser(u);
+      setShowTotpChoice(false);
       setTotpRequired(false);
       setPendingUser(null);
       setMessage('');
@@ -65,12 +80,16 @@ function App() {
 
   // Handle skipping TOTP
   async function handleSkipTotp() {
-    if (pendingUser) {
-      setUser({ ...pendingUser, isTotp: false });
+    try {
+      const res = await API.skipTotp();
+      setUser(res.user);
+      setShowTotpChoice(false);
       setTotpRequired(false);
       setPendingUser(null);
       setMessage('');
       navigate('/');
+    } catch (err) {
+      throw new Error(err.error || 'Failed to skip 2FA. Please try again.');
     }
   }
 
@@ -78,6 +97,7 @@ function App() {
   async function handleLogout() {
     await API.logOut();
     setUser(null);
+    setShowTotpChoice(false);
     setTotpRequired(false);
     setPendingUser(null);
     setMessage('');
@@ -107,9 +127,11 @@ function App() {
             <LoginLayout 
               user={user}
               onLogin={handleLogin} 
+              showTotpChoice={showTotpChoice}
               totpRequired={totpRequired} 
               onTotp={handleTotp} 
-              onSkipTotp={handleSkipTotp} 
+              onSkipTotp={handleSkipTotp}
+              onChooseTotp={handleTotpChoice}
             />
           } />
           <Route path="/order" element={

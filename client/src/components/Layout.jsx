@@ -40,15 +40,15 @@ function NotFoundLayout() {
 
 //------------------------------------------------------------------------
 // --- Login Layout ---
-function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp, user }) {
+function LoginLayout({ onLogin, showTotpChoice, totpRequired, onTotp, onSkipTotp, onChooseTotp, user }) {
   const navigate = useNavigate();
 
   // Redirect authenticated users away from login page
   useEffect(() => {
-    if (user && !totpRequired) {
+    if (user && !showTotpChoice && !totpRequired) {
       navigate('/', { replace: true });
     }
-  }, [user, totpRequired, navigate]);
+  }, [user, showTotpChoice, totpRequired, navigate]);
 
   // Don't show login form if user is already authenticated (unless 2FA is pending)
   if (user && !totpRequired) {
@@ -62,9 +62,11 @@ function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp, user }) {
           <div className="card-body">
             <LoginForm 
               onLogin={onLogin} 
+              showTotpChoice={showTotpChoice}
               totpRequired={totpRequired} 
               onTotp={onTotp}
               onSkipTotp={onSkipTotp}
+              onChooseTotp={onChooseTotp}
             />
           </div>
         </div>
