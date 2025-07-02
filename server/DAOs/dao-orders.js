@@ -1,4 +1,5 @@
 const db = require('../db');
+const IngredientsDAO = require('./dao-ingredients');
 
 // Get all orders for a user (with dish, size, total, date, and ingredients)
 async function getOrdersByUser(userId) {
@@ -43,17 +44,34 @@ async function createOrder(userId, dishId, size, total, ingredientIds) {
   const result = await db.run(sql, [userId, dishId, size, total]);
   const orderId = result.lastID;
   
-  // Add ingredients to the order
+  // Add ingredients to the order and update availability
   for (const ingId of ingredientIds) {
     await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (?, ?)', [orderId, ingId]);
+    // Update ingredient availability (reduce by 1 portion) - check availability again
+    const success = await IngredientsDAO.updateIngredientAvailability(ingId, 1);
+    if (!success) {
+      // If availability update fails, cancel the order and throw error
+      await db.run('UPDATE orders SET cancelled = 1 WHERE id = ?', [orderId]);
+      const ingredient = await IngredientsDAO.getIngredientById(ingId);
+      throw new Error(`Not enough ${ingredient.name} available`);
+    }
   }
   
   return orderId;
 }
 
-// Cancel an order (set cancelled=1)
+// Cancel an order (set cancelled=1 and restore ingredient availability)
 async function cancelOrder(orderId) {
+  // Get order ingredients before cancelling to restore availability
+  const ingredients = await getOrderIngredients(orderId);
+  
+  // Set order as cancelled
   await db.run('UPDATE orders SET cancelled = 1 WHERE id = ?', [orderId]);
+  
+  // Restore ingredient availability
+  for (const ingredient of ingredients) {
+    await IngredientsDAO.restoreIngredientAvailability(ingredient.id, 1);
+  }
 }
 
 module.exports = {

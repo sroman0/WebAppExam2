@@ -33,7 +33,39 @@ async function getAllIngredients() {
   return ingredients;
 }
 
+// Update ingredient availability (reduce when order is confirmed) - returns true if successful
+async function updateIngredientAvailability(ingredientId, quantityUsed) {
+  // Only update if ingredient has limited availability
+  const ingredient = await db.get('SELECT availability FROM ingredients WHERE id = ?', [ingredientId]);
+  if (ingredient && ingredient.availability !== null) {
+    if (ingredient.availability < quantityUsed) {
+      return false; // Not enough availability
+    }
+    const newAvailability = ingredient.availability - quantityUsed;
+    await db.run('UPDATE ingredients SET availability = ? WHERE id = ?', [newAvailability, ingredientId]);
+  }
+  return true;
+}
+
+// Restore ingredient availability (when order is cancelled)
+async function restoreIngredientAvailability(ingredientId, quantityToRestore) {
+  // Only restore if ingredient has limited availability
+  const ingredient = await db.get('SELECT availability FROM ingredients WHERE id = ?', [ingredientId]);
+  if (ingredient && ingredient.availability !== null) {
+    const newAvailability = ingredient.availability + quantityToRestore;
+    await db.run('UPDATE ingredients SET availability = ? WHERE id = ?', [newAvailability, ingredientId]);
+  }
+}
+
+// Get ingredient by ID
+async function getIngredientById(id) {
+  return await db.get('SELECT * FROM ingredients WHERE id = ?', [id]);
+}
+
 // Export functions
 module.exports = {
   getAllIngredients,
+  updateIngredientAvailability,
+  restoreIngredientAvailability,
+  getIngredientById,
 };

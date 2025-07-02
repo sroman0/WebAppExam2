@@ -203,6 +203,10 @@ async function initDB() {
     
     await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (4, 2)'); // bob order 2: tomatoes
     await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (4, 5)'); // bob order 2: olives
+    
+    // Update ingredient availability after sample orders (to match exam requirements)
+    // Ham was used once, so decrease from 2 to 1
+    await db.run('UPDATE ingredients SET availability = 1 WHERE name = ?', ['ham']);
   }
 
   return db;

@@ -22,7 +22,7 @@ const PORT = 3001;
 
 // CORS configuration for client-server separation
 app.use(cors({
-  origin: 'http://localhost:5173',
+  origin: ['http://localhost:5173', 'http://localhost:5174'],
   credentials: true
 }));
 
@@ -146,14 +146,58 @@ app.post('/api/orders', isAuthenticated, async (req, res) => {
   }
   
   try {
-    // Calculate total price
-    const sizePrice = { small: 5, medium: 7, large: 9 }[size] || 0;
+    // Get ingredient data for validation
     const ingredientsData = await IngredientsDAO.getAllIngredients();
     const selectedIngredients = ingredientsData.filter(ing => ingredients.includes(ing.id));
+    
+    // Validate ingredient count based on size
+    const maxIngredients = { small: 3, medium: 5, large: 7 }[size] || 0;
+    if (selectedIngredients.length > maxIngredients) {
+      return res.status(400).json({ 
+        error: `${size} size can only have ${maxIngredients} ingredients` 
+      });
+    }
+    
+    // Validate ingredient availability
+    for (const ingredient of selectedIngredients) {
+      if (ingredient.availability !== null && ingredient.availability <= 0) {
+        return res.status(400).json({ 
+          error: `Not enough ${ingredient.name} available` 
+        });
+      }
+    }
+    
+    // Validate ingredient constraints (dependencies and incompatibilities)
+    const selectedNames = selectedIngredients.map(ing => ing.name);
+    
+    for (const ingredient of selectedIngredients) {
+      // Check dependencies
+      if (ingredient.requires && ingredient.requires.length > 0) {
+        for (const required of ingredient.requires) {
+          if (!selectedNames.includes(required)) {
+            return res.status(400).json({ 
+              error: `${ingredient.name} requires ${required}` 
+            });
+          }
+        }
+      }
+      
+      // Check incompatibilities
+      if (ingredient.incompatible && ingredient.incompatible.length > 0) {
+        for (const incompatible of ingredient.incompatible) {
+          if (selectedNames.includes(incompatible)) {
+            return res.status(400).json({ 
+              error: `${ingredient.name} is incompatible with ${incompatible}` 
+            });
+          }
+        }
+      }
+    }
+    
+    // Calculate total price
+    const sizePrice = { small: 5, medium: 7, large: 9 }[size] || 0;
     const ingredientsPrice = selectedIngredients.reduce((sum, ing) => sum + ing.price, 0);
     const total = sizePrice + ingredientsPrice;
-    
-    // TODO: Add constraint validation here
     
     const orderId = await OrdersDAO.createOrder(userId, dish_id, size, total, ingredients);
     res.status(201).json({ orderId, message: 'Order created successfully' });

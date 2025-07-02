@@ -95,7 +95,7 @@ function App() {
     <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ff4757 100%)' }}>
       <NavigationBar user={user} onLogout={handleLogout} />
       
-      <Container fluid className="px-3 py-4" style={{ paddingTop: '80px' }}>
+      <Container fluid className="px-3 py-4" style={{ paddingTop: '120px', minHeight: '100vh' }}>
         {message && (
           <Alert variant={messageType} className="mb-4 shadow-sm" style={{ borderRadius: '15px' }}>
             {message}
@@ -105,6 +105,7 @@ function App() {
         <Routes>
           <Route path="/login" element={
             <LoginLayout 
+              user={user}
               onLogin={handleLogin} 
               totpRequired={totpRequired} 
               onTotp={handleTotp} 

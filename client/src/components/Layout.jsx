@@ -40,7 +40,21 @@ function NotFoundLayout() {
 
 //------------------------------------------------------------------------
 // --- Login Layout ---
-function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp }) {
+function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp, user }) {
+  const navigate = useNavigate();
+
+  // Redirect authenticated users away from login page
+  useEffect(() => {
+    if (user && !totpRequired) {
+      navigate('/', { replace: true });
+    }
+  }, [user, totpRequired, navigate]);
+
+  // Don't show login form if user is already authenticated (unless 2FA is pending)
+  if (user && !totpRequired) {
+    return null; // Will redirect via useEffect
+  }
+
   return (
     <Row className="justify-content-center">
       <Col xs={12} sm={10} md={8} lg={5}>
@@ -67,7 +81,7 @@ function MenuLayout({ user, showMessage }) {
   return (
     <div>
       {/* Welcome Section */}
-      <Row className="mb-4">
+      <Row className="mb-4 page-header">
         <Col>
           <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
             <div className="card-body p-4 text-center">
@@ -128,6 +142,18 @@ function MenuLayout({ user, showMessage }) {
 function OrderLayout({ user, showMessage }) {
   const navigate = useNavigate();
 
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // Don't render if user is not authenticated
+  if (!user) {
+    return null; // Will redirect via useEffect
+  }
+
   const handleOrderComplete = () => {
     navigate('/orders');
   };
@@ -135,7 +161,7 @@ function OrderLayout({ user, showMessage }) {
   return (
     <div>
       {/* Header */}
-      <Row className="mb-4">
+      <Row className="mb-4 page-header">
         <Col>
           <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
             <div className="card-body p-4 text-center">
@@ -164,10 +190,24 @@ function OrderLayout({ user, showMessage }) {
 //------------------------------------------------------------------------
 // --- Order History Layout ---
 function OrderHistoryLayout({ user, showMessage }) {
+  const navigate = useNavigate();
+
+  // Redirect unauthenticated users to login
+  useEffect(() => {
+    if (!user) {
+      navigate('/login', { replace: true });
+    }
+  }, [user, navigate]);
+
+  // Don't render if user is not authenticated
+  if (!user) {
+    return null; // Will redirect via useEffect
+  }
+
   return (
     <div>
       {/* Header */}
-      <Row className="mb-4">
+      <Row className="mb-4 page-header">
         <Col>
           <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
             <div className="card-body p-4 text-center">

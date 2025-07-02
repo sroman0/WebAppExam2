@@ -59,7 +59,37 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
     return basePrice + ingredientsPrice;
   };
 
-  // Check if ingredient can be added
+  // Recursively add required ingredients
+  const addRequiredIngredients = (ingredientId, currentIngredients, visited = new Set()) => {
+    // Prevent infinite loops
+    if (visited.has(ingredientId)) {
+      return currentIngredients;
+    }
+    visited.add(ingredientId);
+
+    const ingredient = ingredients.find(i => i.id === ingredientId);
+    if (!ingredient) return currentIngredients;
+
+    // Add the ingredient itself if not already present
+    if (!currentIngredients.includes(ingredientId)) {
+      currentIngredients.push(ingredientId);
+    }
+
+    // Check if this ingredient has requirements
+    if (ingredient.requires && ingredient.requires.length > 0) {
+      for (const requiredName of ingredient.requires) {
+        const requiredIngredient = ingredients.find(i => i.name === requiredName);
+        if (requiredIngredient) {
+          // Recursively add required ingredients
+          currentIngredients = addRequiredIngredients(requiredIngredient.id, currentIngredients, visited);
+        }
+      }
+    }
+
+    return currentIngredients;
+  };
+
+  // Check if ingredient can be added (considering recursive dependencies)
   const canAddIngredient = (ingredientId) => {
     const ingredient = ingredients.find(i => i.id === ingredientId);
     if (!ingredient) return false;
@@ -74,12 +104,25 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
       return false;
     }
 
-    // Check max ingredients for size
-    if (selectedIngredients.length >= sizeInfo[selectedSize].maxIngredients) {
+    // Calculate total ingredients needed (including recursive dependencies)
+    let tempIngredients = [...selectedIngredients];
+    tempIngredients = addRequiredIngredients(ingredientId, tempIngredients);
+    
+    // Check if adding all required ingredients exceeds the limit
+    if (tempIngredients.length > sizeInfo[selectedSize].maxIngredients) {
       return false;
     }
 
-    // Check incompatibilities
+    // Check availability for all ingredients that would be added
+    const ingredientsToAdd = tempIngredients.filter(id => !selectedIngredients.includes(id));
+    for (const newIngId of ingredientsToAdd) {
+      const ing = ingredients.find(i => i.id === newIngId);
+      if (ing && ing.availability !== null && ing.availability <= 0) {
+        return false;
+      }
+    }
+
+    // Check incompatibilities for the main ingredient
     if (ingredient.incompatible) {
       for (const incompatible of ingredient.incompatible) {
         const incompatibleId = ingredients.find(i => i.name === incompatible)?.id;
@@ -90,6 +133,14 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
     }
 
     return true;
+  };
+
+  // Get all ingredients that would be added (for display purposes)
+  const getIngredientsToAdd = (ingredientId) => {
+    let tempIngredients = [...selectedIngredients];
+    tempIngredients = addRequiredIngredients(ingredientId, tempIngredients);
+    const ingredientsToAdd = tempIngredients.filter(id => !selectedIngredients.includes(id));
+    return ingredientsToAdd.map(id => ingredients.find(i => i.id === id)?.name).filter(Boolean);
   };
 
   // Check if ingredient can be removed
@@ -145,20 +196,28 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
         return;
       }
 
-      // Check if we need to add required ingredients
-      const ingredient = ingredients.find(i => i.id === ingredientId);
-      let newIngredients = [...selectedIngredients, ingredientId];
+      // Use recursive function to add all required ingredients
+      let newIngredients = [...selectedIngredients];
+      newIngredients = addRequiredIngredients(ingredientId, newIngredients);
       
-      if (ingredient.requires) {
-        for (const requiredName of ingredient.requires) {
-          const requiredIngredient = ingredients.find(i => i.name === requiredName);
-          if (requiredIngredient && !newIngredients.includes(requiredIngredient.id)) {
-            if (newIngredients.length >= sizeInfo[selectedSize].maxIngredients) {
-              setConstraintError(`Cannot add ${ingredient.name}: not enough space for required ingredients`);
-              return;
-            }
-            newIngredients.push(requiredIngredient.id);
-          }
+      // Check if adding all required ingredients exceeds the limit
+      if (newIngredients.length > sizeInfo[selectedSize].maxIngredients) {
+        const ingredient = ingredients.find(i => i.id === ingredientId);
+        const requiredCount = newIngredients.length - selectedIngredients.length;
+        setConstraintError(
+          `Cannot add ${ingredient.name}: it requires ${requiredCount - 1} additional ingredients ` +
+          `(${newIngredients.length - selectedIngredients.length} total), but only ${sizeInfo[selectedSize].maxIngredients - selectedIngredients.length} slots available`
+        );
+        return;
+      }
+
+      // Check availability for all new ingredients
+      const ingredientsToAdd = newIngredients.filter(id => !selectedIngredients.includes(id));
+      for (const newIngId of ingredientsToAdd) {
+        const ing = ingredients.find(i => i.id === newIngId);
+        if (ing && ing.availability !== null && ing.availability <= 0) {
+          setConstraintError(`Cannot add required ingredient ${ing.name}: out of stock`);
+          return;
         }
       }
 
@@ -287,6 +346,24 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
                                     </div>
                                   )}
                                 </div>
+                              )}
+                              
+                              {/* Show what will be added automatically */}
+                              {!isSelected && canAdd && (
+                                (() => {
+                                  const ingredientsToAdd = getIngredientsToAdd(ingredient.id);
+                                  if (ingredientsToAdd.length > 1) {
+                                    return (
+                                      <div className="mt-1">
+                                        <div className="small text-info">
+                                          <i className="bi bi-plus-circle me-1"></i>
+                                          Will also add: {ingredientsToAdd.filter(name => name !== ingredient.name).join(', ')}
+                                        </div>
+                                      </div>
+                                    );
+                                  }
+                                  return null;
+                                })()
                               )}
                             </div>
                           </div>

@@ -6,7 +6,10 @@ function NavigationBar({ user, onLogout }) {
 
   return (
     <Navbar 
-      style={{ background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)' }} 
+      style={{ 
+        background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)',
+        zIndex: 1030
+      }} 
       variant="dark" 
       expand="lg" 
       fixed="top" 
