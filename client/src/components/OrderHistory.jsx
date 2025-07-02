@@ -275,7 +275,12 @@ function OrderHistory({ user, showMessage }) {
       </Modal>
 
       {/* Cancel Confirmation Modal */}
-      <Modal show={showCancelConfirm} onHide={() => setShowCancelConfirm(false)} centered>
+      <Modal 
+        show={showCancelConfirm} 
+        onHide={() => setShowCancelConfirm(false)} 
+        centered
+        style={{ zIndex: 1055 }}
+      >
         <Modal.Header closeButton style={{ background: 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)', color: 'white', border: 'none' }}>
           <Modal.Title>
             <i className="bi bi-exclamation-triangle-fill me-2"></i>
@@ -297,14 +302,18 @@ function OrderHistory({ user, showMessage }) {
           </p>
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button variant="outline-secondary" onClick={() => setShowCancelConfirm(false)} style={{ borderRadius: '20px' }}>
+          <Button 
+            variant="outline-secondary" 
+            onClick={() => setShowCancelConfirm(false)} 
+            style={{ borderRadius: '20px', zIndex: 1060, position: 'relative' }}
+          >
             Keep Order
           </Button>
           <Button 
             variant="danger" 
             onClick={handleCancelOrder}
             disabled={cancelling}
-            style={{ borderRadius: '20px' }}
+            style={{ borderRadius: '20px', zIndex: 1060, position: 'relative' }}
           >
             {cancelling ? (
               <>

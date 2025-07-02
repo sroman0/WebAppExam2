@@ -12,7 +12,6 @@ import { MenuLayout, LoginLayout, OrderLayout, OrderHistoryLayout, NotFoundLayou
 function App() {
   // State management
   const [user, setUser] = useState(null);
-  const [showTotpChoice, setShowTotpChoice] = useState(false);
   const [totpRequired, setTotpRequired] = useState(false);
   const [pendingUser, setPendingUser] = useState(null);
   const [message, setMessage] = useState('');
@@ -32,8 +31,7 @@ function App() {
     try {
       const res = await API.logIn(credentials);
       if (res.canDoTotp) {
-        setShowTotpChoice(true);
-        setTotpRequired(false);
+        setTotpRequired(true);
         setPendingUser(res.user);
         setMessage('');
       } else {
@@ -43,22 +41,10 @@ function App() {
       }
     } catch (err) {
       setUser(null);
-      setShowTotpChoice(false);
       setTotpRequired(false);
       setPendingUser(null);
       setMessage('');
       throw new Error(err.error || 'Login failed. Please check your credentials.');
-    }
-  }
-
-  // Handle user's choice about 2FA
-  function handleTotpChoice(enable2FA) {
-    if (enable2FA) {
-      setShowTotpChoice(false);
-      setTotpRequired(true);
-    } else {
-      // User chose to skip 2FA entirely
-      handleSkipTotp();
     }
   }
 
@@ -68,7 +54,6 @@ function App() {
       await API.logInTotp(code);
       const u = await API.getUserInfo();
       setUser(u);
-      setShowTotpChoice(false);
       setTotpRequired(false);
       setPendingUser(null);
       setMessage('');
@@ -83,7 +68,6 @@ function App() {
     try {
       const res = await API.skipTotp();
       setUser(res.user);
-      setShowTotpChoice(false);
       setTotpRequired(false);
       setPendingUser(null);
       setMessage('');
@@ -97,7 +81,6 @@ function App() {
   async function handleLogout() {
     await API.logOut();
     setUser(null);
-    setShowTotpChoice(false);
     setTotpRequired(false);
     setPendingUser(null);
     setMessage('');
@@ -115,46 +98,46 @@ function App() {
     <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ff4757 100%)' }}>
       <NavigationBar user={user} onLogout={handleLogout} />
       
-      <Container fluid className="px-3 py-4" style={{ paddingTop: '120px', minHeight: '100vh' }}>
-        {message && (
-          <Alert variant={messageType} className="mb-4 shadow-sm" style={{ borderRadius: '15px' }}>
-            {message}
-          </Alert>
-        )}
-        
-        <Routes>
-          <Route path="/login" element={
-            <LoginLayout 
-              user={user}
-              onLogin={handleLogin} 
-              showTotpChoice={showTotpChoice}
-              totpRequired={totpRequired} 
-              onTotp={handleTotp} 
-              onSkipTotp={handleSkipTotp}
-              onChooseTotp={handleTotpChoice}
-            />
-          } />
-          <Route path="/order" element={
-            <OrderLayout 
-              user={user} 
-              showMessage={showMessage} 
-            />
-          } />
-          <Route path="/orders" element={
-            <OrderHistoryLayout 
-              user={user} 
-              showMessage={showMessage} 
-            />
-          } />
-          <Route path="/" element={
-            <MenuLayout 
-              user={user} 
-              showMessage={showMessage} 
-            />
-          } />
-          <Route path="*" element={<NotFoundLayout />} />
-        </Routes>
-      </Container>
+      <div className="main-content">
+        <Container fluid className="px-3 py-4">
+          {message && (
+            <Alert variant={messageType} className="mb-4 shadow-sm" style={{ borderRadius: '15px' }}>
+              {message}
+            </Alert>
+          )}
+          
+          <Routes>
+            <Route path="/login" element={
+              <LoginLayout 
+                user={user}
+                onLogin={handleLogin} 
+                totpRequired={totpRequired} 
+                onTotp={handleTotp} 
+                onSkipTotp={handleSkipTotp}
+              />
+            } />
+            <Route path="/order" element={
+              <OrderLayout 
+                user={user} 
+                showMessage={showMessage} 
+              />
+            } />
+            <Route path="/orders" element={
+              <OrderHistoryLayout 
+                user={user} 
+                showMessage={showMessage} 
+              />
+            } />
+            <Route path="/" element={
+              <MenuLayout 
+                user={user} 
+                showMessage={showMessage} 
+              />
+            } />
+            <Route path="*" element={<NotFoundLayout />} />
+          </Routes>
+        </Container>
+      </div>
     </div>
   );
 }
