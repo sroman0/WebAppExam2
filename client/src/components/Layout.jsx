@@ -40,21 +40,7 @@ function NotFoundLayout() {
 
 //------------------------------------------------------------------------
 // --- Login Layout ---
-function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp, user }) {
-  const navigate = useNavigate();
-
-  // Redirect authenticated users away from login page
-  useEffect(() => {
-    if (user && !totpRequired) {
-      navigate('/', { replace: true });
-    }
-  }, [user, totpRequired, navigate]);
-
-  // Don't show login form if user is already authenticated (unless 2FA is pending)
-  if (user && !totpRequired) {
-    return null; // Will redirect via useEffect
-  }
-
+function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp }) {
   return (
     <Row className="justify-content-center">
       <Col xs={12} sm={10} md={8} lg={5}>

@@ -15,19 +15,17 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
     setIsLoading(true);
-    setErrorMessage('');
+    setErrorMessage(''); // Clear any previous local errors
 
-    try {
-      if (totpRequired) {
-        await onTotp(totpCode);
-      } else {
-        await onLogin({ username, password });
-      }
-    } catch (error) {
-      setErrorMessage(error.message);
-    } finally {
-      setIsLoading(false);
+    // With centralized error handling, we don't need try/catch here
+    // Errors are handled at the App level and displayed in the global message
+    if (totpRequired) {
+      await onTotp(totpCode);
+    } else {
+      await onLogin({ username, password });
     }
+    
+    setIsLoading(false);
   };
 
   // Clear error message when user starts typing

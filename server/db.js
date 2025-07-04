@@ -166,13 +166,14 @@ async function initDB() {
   const userCount = await db.get('SELECT COUNT(*) as count FROM users');
   if (userCount.count === 0) {
     // Create test users with hashed passwords
+    // All users can perform 2FA or skip it (totp_required = 1 means they CAN do TOTP, not that it's required)
     const hashedPassword = await bcrypt.hash('password', 10);
     
     const users = [
-      [1, 'alice', hashedPassword, 1], // 2FA enabled
-      [2, 'bob', hashedPassword, 0],   // No 2FA
-      [3, 'charlie', hashedPassword, 1], // 2FA enabled
-      [4, 'dave', hashedPassword, 0]   // No 2FA
+      [1, 'simone', hashedPassword, 1],  // Can do 2FA
+      [2, 'elia', hashedPassword, 1],    // Can do 2FA
+      [3, 'andrea', hashedPassword, 1],  // Can do 2FA
+      [4, 'renato', hashedPassword, 1]   // Can do 2FA
     ];
     
     for (const [id, username, password, totp_required] of users) {
@@ -181,28 +182,28 @@ async function initDB() {
     }
 
     // Create some sample orders to meet exam requirements
-    // 2 users with orders: alice (2 small dishes), bob (1 medium, 1 large)
+    // 2 users with orders: simone (2 small dishes), elia (1 medium, 1 large)
     await db.run('INSERT INTO orders (user_id, dish_id, size, total, date) VALUES (?, ?, ?, ?, ?)', 
-                 [1, 1, 'small', 6.00, '2025-06-29 10:00:00']); // alice: pizza small with tomatoes
+                 [1, 1, 'small', 6.00, '2025-06-29 10:00:00']); // simone: pizza small with tomatoes
     await db.run('INSERT INTO orders (user_id, dish_id, size, total, date) VALUES (?, ?, ?, ?, ?)', 
-                 [1, 2, 'small', 5.50, '2025-06-29 11:00:00']); // alice: pasta small with tomatoes
+                 [1, 2, 'small', 5.50, '2025-06-29 11:00:00']); // simone: pasta small with tomatoes
     
     await db.run('INSERT INTO orders (user_id, dish_id, size, total, date) VALUES (?, ?, ?, ?, ?)', 
-                 [2, 1, 'medium', 8.20, '2025-06-29 12:00:00']); // bob: pizza medium with ham
+                 [2, 1, 'medium', 8.20, '2025-06-29 12:00:00']); // elia: pizza medium with ham
     await db.run('INSERT INTO orders (user_id, dish_id, size, total, date) VALUES (?, ?, ?, ?, ?)', 
-                 [2, 3, 'large', 10.50, '2025-06-29 13:00:00']); // bob: salad large with tomatoes+olives
+                 [2, 3, 'large', 10.50, '2025-06-29 13:00:00']); // elia: salad large with tomatoes+olives
 
     // Add ingredients to orders
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (1, 2)'); // alice order 1: tomatoes
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (1, 5)'); // alice order 1: olives (required by tomatoes)
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (1, 2)'); // simone order 1: tomatoes
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (1, 5)'); // simone order 1: olives (required by tomatoes)
     
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (2, 2)'); // alice order 2: tomatoes
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (2, 5)'); // alice order 2: olives (required by tomatoes)
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (2, 2)'); // simone order 2: tomatoes
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (2, 5)'); // simone order 2: olives (required by tomatoes)
     
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (3, 4)'); // bob order 1: ham
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (3, 4)'); // elia order 1: ham
     
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (4, 2)'); // bob order 2: tomatoes
-    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (4, 5)'); // bob order 2: olives
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (4, 2)'); // elia order 2: tomatoes
+    await db.run('INSERT INTO order_ingredients (order_id, ingredient_id) VALUES (4, 5)'); // elia order 2: olives
     
     // Update ingredient availability after sample orders (to match exam requirements)
     // Ham was used once, so decrease from 2 to 1
