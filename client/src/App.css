@@ -1,313 +1,140 @@
-body {
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-}
+/* Minimal CSS - Most styling should be done with Bootstrap classes in JSX */
 
-/* Fixed navbar spacing fix */
-.navbar-fixed-top-spacing {
-  padding-top: 140px !important;
-}
-
-/* Prevent navbar overlap - main content area */
+/* Essential navbar spacing - cannot be done with Bootstrap alone */
 .main-content {
-  padding-top: 140px !important;
-  min-height: 100vh;
+  padding-top: 120px !important;
 }
 
-/* Ensure navbar stays on top */
-.navbar-fixed {
-  z-index: 1030 !important;
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  right: 0;
+/* App background gradient - cannot be done with Bootstrap alone */
+.app-background {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ff4757 100%) !important;
 }
 
-/* Ensure all content appears below the fixed navigation bar */
-.modal {
-  z-index: 1055 !important; /* Higher than navbar */
+/* Navbar gradient - cannot be done with Bootstrap alone */
+.navbar-gradient {
+  background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%) !important;
 }
 
-.modal-backdrop {
-  z-index: 1050 !important; /* Between navbar and modal */
+/* Primary color text - used throughout the app */
+.text-primary-custom {
+  color: #ff4757 !important;
 }
 
-.dropdown-menu {
-  z-index: 1020 !important;
+/* Light background for form inputs */
+.form-control-light {
+  background: #f8fafc !important;
+  padding: 12px 16px !important;
 }
 
-.toast {
-  z-index: 1060 !important;
-  top: 150px !important; /* Position below navbar */
+/* TOTP input specific styling */
+.totp-input {
+  font-size: 1.2rem !important;
+  letter-spacing: 0.3rem !important;
 }
 
-/* Ensure alerts are always visible below navbar */
-.alert {
-  margin-top: 0 !important;
-  position: relative;
-  z-index: 1020;
+/* Button gradients */
+.btn-gradient-primary {
+  background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%) !important;
+  border: none !important;
+  border-radius: 25px !important;
 }
 
-/* Additional spacing for page headers */
-.page-header {
-  margin-top: 20px;
-}
-
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #ff6b6b;
-  border-radius: 10px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #ff4757;
-}
-
-/* Responsive navbar spacing */
-@media (max-width: 992px) {
-  .navbar-fixed-top-spacing,
-  .main-content {
-    padding-top: 160px !important;
-  }
-  
-  .page-header {
-    margin-top: 10px;
-  }
-}
-
-@media (max-width: 768px) {
-  .navbar-fixed-top-spacing,
-  .main-content {
-    padding-top: 180px !important;
-  }
-}
-
-/* Smooth transitions */
-.btn, .card, .form-control, .form-select {
-  transition: all 0.2s ease-in-out;
-}
-
-.btn:hover {
-  transform: translateY(-1px);
-}
-
-.card:hover {
+.btn-gradient-primary:hover {
+  background: linear-gradient(90deg, #ff3742 0%, #ff5656 100%) !important;
   transform: translateY(-2px);
 }
 
-/* Custom focus styles */
-.form-control:focus, .form-select:focus {
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+.btn-outline-primary-custom {
+  border-color: #ff4757 !important;
+  color: #ff4757 !important;
+  border-radius: 25px !important;
 }
 
-/* Custom checkbox styles */
-.form-check-input:checked {
-  background-color: #ff4757;
-  border-color: #ff4757;
+.btn-outline-primary-custom:hover {
+  background-color: #ff4757 !important;
+  border-color: #ff4757 !important;
 }
 
-.form-check-input:focus {
-  border-color: #ff6b6b;
-  box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
+/* Card styling with transparency */
+.card-transparent {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 15px !important;
 }
 
-/* Gradient text */
-.gradient-text {
-  background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+/* Card headers with gradient */
+.card-header-gradient {
+  background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%) !important;
+  border-radius: 15px 15px 0 0 !important;
+}
+
+/* Dish cards with custom border */
+.dish-card {
+  border: 2px solid #ff6b6b !important;
+  border-radius: 10px !important;
+}
+
+/* Scrollable card body */
+.card-body-scrollable {
+  max-height: 600px !important;
+  overflow-y: auto !important;
+}
+
+.card-body-scrollable-menu {
+  max-height: 500px !important;
+  overflow-y: auto !important;
 }
 
 /* Sticky positioning for order summary */
-.sticky-top {
+.sticky-order-summary {
   top: 100px !important;
 }
 
-/* Loading spinner colors */
-.spinner-border-primary {
-  color: #ff4757;
+/* Modal header gradients */
+.modal-header-gradient-danger {
+  background: linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%) !important;
+  color: white !important;
+  border: none !important;
 }
 
-/* Badge variations */
-.badge.bg-primary {
-  background-color: #ff4757 !important;
+.modal-header-gradient-red {
+  background: linear-gradient(90deg, #dc3545 0%, #c82333 100%) !important;
+  color: white !important;
+  border: none !important;
 }
 
-.badge.bg-secondary {
-  background-color: #6c757d !important;
+/* Card body with success gradient */
+.card-body-success-gradient {
+  background: linear-gradient(90deg, #28a745 0%, #20c997 100%) !important;
+  border-radius: 15px !important;
 }
 
-/* Custom alert styles */
-.alert {
-  border: none;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+@media (max-width: 992px) {
+  .main-content {
+    padding-top: 140px !important;
+  }
 }
 
-/* Hover effects for interactive elements */
-.list-group-item:hover {
-  background-color: #f8f9fa;
+@media (max-width: 768px) {
+  .main-content {
+    padding-top: 160px !important;
+  }
 }
 
-/* Custom modal styles */
-.modal-content {
-  border-radius: 15px;
-  border: none;
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
-}
-
-/* Fix modal button interactions */
-.modal-footer .btn {
-  pointer-events: auto !important;
-  z-index: 1060 !important;
-  position: relative;
-}
-
-.modal-content {
-  z-index: 1060 !important;
-  position: relative;
-}
-
-.modal-dialog {
-  z-index: 1060 !important;
-  position: relative;
-}
-
-/* Ensure modal is fully interactive */
-.modal.show {
-  display: block !important;
+/* Essential z-index fixes for modals */
+.modal {
   z-index: 1055 !important;
 }
 
-.modal.show .modal-dialog {
-  pointer-events: auto !important;
+.modal-backdrop {
+  z-index: 1050 !important;
 }
 
-/* Responsive design improvements */
-@media (max-width: 768px) {
-  .container-fluid {
-    padding-left: 15px;
-    padding-right: 15px;
-    padding-top: 120px !important; /* Extra padding for mobile */
-  }
-  
-  .card-body {
-    padding: 1rem !important;
-  }
-  
-  .display-4 {
-    font-size: 2rem;
-  }
+/* Modal button z-index fixes */
+.modal-button-high-z {
+  z-index: 1060 !important;
+  position: relative !important;
 }
 
-/* Animation for success messages */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.alert {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-/* Custom button focus styles */
-.btn:focus {
-  box-shadow: 0 0 0 0.2rem rgba(255, 107, 107, 0.25);
-}
-
-/* Ingredient constraint indicators */
-.constraint-indicator {
-  font-size: 0.75rem;
-  opacity: 0.8;
-}
-
-/* Order status badges */
-.badge.bg-success {
-  background-color: #28a745 !important;
-}
-
-.badge.bg-danger {
-  background-color: #dc3545 !important;
-}
-
-.badge.bg-warning {
-  background-color: #ffc107 !important;
-  color: #212529 !important;
-}
-
-/* Improved form styling */
-.form-control, .form-select {
-  border: 1px solid #dee2e6;
-  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-}
-
-.form-control:hover, .form-select:hover {
-  border-color: #ff6b6b;
-}
-
-/* Card hover effects */
-.card {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
-}
-
-.card:hover {
-  box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Navigation improvements */
-.navbar-brand:hover {
-  transform: scale(1.05);
-  transition: transform 0.2s ease-in-out;
-}
-
-/* Order configurator specific styles */
-.order-configurator .ingredient-item {
-  border-radius: 8px;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.order-configurator .ingredient-item:hover {
-  background-color: #f8f9fa;
-}
-
-/* Price display */
-.price-display {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #28a745;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 576px) {
-  .btn-group-vertical .btn {
-    font-size: 0.875rem;
-  }
-  
-  .card-header h5 {
-    font-size: 1rem;
-  }
-  
-  .modal-dialog {
-    margin: 0.5rem;
-  }
-  
-  /* Additional mobile navbar spacing */
-  .container-fluid {
-    padding-top: 140px !important;
-  }
+.modal-high-z {
+  z-index: 1055 !important;
 }

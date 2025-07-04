@@ -50,7 +50,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
     <div className="p-4">
       <div className="text-center mb-4">
         <i className="bi bi-person-circle display-4 text-primary"></i>
-        <h3 className="mt-3 fw-bold" style={{ color: '#ff4757' }}>
+        <h3 className="mt-3 fw-bold text-primary-custom">
           {totpRequired ? 'Two-Factor Authentication' : 'Welcome Back'}
         </h3>
         <p className="text-muted">
@@ -62,7 +62,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
       </div>
 
       {errorMessage && (
-        <Alert variant="danger" className="mb-3" style={{ borderRadius: '10px' }}>
+        <Alert variant="danger" className="mb-3 rounded-3">
           <i className="bi bi-exclamation-triangle-fill me-2"></i>
           {errorMessage}
         </Alert>
@@ -80,8 +80,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                 placeholder="Enter your username"
                 required
                 disabled={isLoading}
-                className="border-0 shadow-sm"
-                style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
+                className="border-0 shadow-sm form-control-light rounded-3"
               />
             </Form.Group>
 
@@ -94,8 +93,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
                 placeholder="Enter your password"
                 required
                 disabled={isLoading}
-                className="border-0 shadow-sm"
-                style={{ borderRadius: '10px', padding: '12px 16px', background: '#f8fafc' }}
+                className="border-0 shadow-sm form-control-light rounded-3"
               />
             </Form.Group>
           </>
@@ -110,14 +108,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
               maxLength={6}
               required
               disabled={isLoading}
-              className="border-0 shadow-sm text-center"
-              style={{ 
-                borderRadius: '10px', 
-                padding: '12px 16px', 
-                background: '#f8fafc',
-                fontSize: '1.2rem',
-                letterSpacing: '0.3rem'
-              }}
+              className="border-0 shadow-sm text-center form-control-light rounded-3 totp-input"
             />
           </Form.Group>
         )}
@@ -127,12 +118,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
             type="submit" 
             size="lg"
             disabled={isLoading}
-            className="fw-bold border-0 shadow-sm"
-            style={{ 
-              borderRadius: '10px',
-              background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)',
-              padding: '12px'
-            }}
+            className="fw-bold border-0 shadow-sm btn-gradient-primary"
           >
             {isLoading ? (
               <>
@@ -152,7 +138,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
               variant="outline-secondary"
               onClick={onSkipTotp}
               disabled={isLoading}
-              style={{ borderRadius: '10px' }}
+              className="rounded-3"
             >
               <i className="bi bi-skip-forward me-2"></i>
               Skip 2FA
@@ -162,8 +148,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
           <Button 
             variant="link" 
             onClick={() => navigate('/')}
-            className="text-decoration-none"
-            style={{ color: '#ff4757' }}
+            className="text-decoration-none text-primary-custom"
           >
             <i className="bi bi-arrow-left me-1"></i>
             Back to Menu

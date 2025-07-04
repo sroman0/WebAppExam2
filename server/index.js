@@ -7,7 +7,7 @@ const session = require('express-session');
 const passport = require('passport');
 const SQLiteStore = require('connect-sqlite3')(session);
 const path = require('path');
-
+const { check, validationResult } = require('express-validator');
 
 const DishesDAO = require('./DAOs/dao-dishes');
 const IngredientsDAO = require('./DAOs/dao-ingredients');
@@ -15,7 +15,10 @@ const OrdersDAO = require('./DAOs/dao-orders');
 const UsersDAO = require('./DAOs/dao-users');
 const { initDB } = require('./db');
 const LocalStrategy = require('passport-local').Strategy;
-const speakeasy = require('speakeasy');
+
+// TOTP imports - following professor's implementation
+const base32 = require('thirty-two');
+const TotpStrategy = require('passport-totp').Strategy;
 
 const app = express();
 const PORT = 3001;
@@ -68,6 +71,16 @@ passport.deserializeUser(async (id, done) => {
   }
 });
 
+// TOTP Strategy - following professor's implementation
+passport.use(new TotpStrategy(
+  function (user, done) {
+    // For this exam, we use a fixed secret as specified in the requirements
+    // In case .secret does not exist, decode() will return an empty buffer
+    const secret = 'LXBSMDTMSP2I5XFXIYRGFVWSFI';
+    return done(null, base32.decode(secret), 30);  // 30 = period of key validity
+  }
+));
+
 // API routes (to be implemented)
 // app.use('/api/sessions', authRoutes);
 // app.use('/api/dishes', dishRoutes);
@@ -103,11 +116,10 @@ const isAuthenticated = (req, res, next) => {
 };
 
 // Middleware to check 2FA requirement for certain operations
-const requires2FA = (req, res, next) => {
-  if (req.isAuthenticated() && req.session.totpVerified) {
+const isTotp = (req, res, next) => {
+  if (req.session.method === 'totp')
     return next();
-  }
-  res.status(403).json({ error: '2FA verification required for this operation' });
+  return res.status(401).json({ error: 'Missing TOTP authentication' });
 };
 
 // GET /api/orders - get all orders for the authenticated user
@@ -208,7 +220,7 @@ app.post('/api/orders', isAuthenticated, async (req, res) => {
 });
 
 // DELETE /api/orders/:id - cancel an order (requires 2FA)
-app.delete('/api/orders/:id', requires2FA, async (req, res) => {
+app.delete('/api/orders/:id', isAuthenticated, isTotp, async (req, res) => {
   try {
     const order = await OrdersDAO.getOrderDetails(req.params.id);
     if (!order) return res.status(404).json({ error: 'Order not found.' });
@@ -225,133 +237,61 @@ app.delete('/api/orders/:id', requires2FA, async (req, res) => {
   }
 });
 
-// POST /api/sessions - login (with optional TOTP)
-app.post('/api/sessions', (req, res, next) => {
-  passport.authenticate('local', (err, user, info) => {
-    if (err) {
-      console.error('Passport error:', err);
+// Helper function to return client user info - following professor's pattern
+function clientUserInfo(req) {
+  const user = req.user;
+  return {
+    id: user.id, 
+    username: user.username, 
+    name: user.username, 
+    canDoTotp: true, // For this exam, all users can do TOTP
+    isTotp: req.session.method === 'totp'
+  };
+}
+
+// POST /api/sessions - login following professor's pattern
+app.post('/api/sessions', function(req, res, next) {
+  passport.authenticate('local', (err, user, info) => { 
+    if (err)
       return next(err);
-    }
     if (!user) {
-      console.log('No user after passport.authenticate:', info);
-      return res.status(401).json({ error: info?.message || 'Invalid credentials' });
+      // display wrong login messages
+      return res.status(401).json({ error: info?.message || 'Incorrect username or password'});
     }
-    
-    req.logIn(user, (err) => {
-      if (err) return next(err);
+    // success, perform the login and establish a login session
+    req.login(user, (err) => {
+      if (err)
+        return next(err);
       
-      // Always offer 2FA option to all users after successful login
-      req.session.pending2FA = true;
-      req.session.pendingUserId = user.id;
-      req.session.totpVerified = false;
-      return res.json({ 
-        canDoTotp: true, 
-        user: { 
-          id: user.id, 
-          name: user.username,
-          username: user.username 
-        } 
-      });
+      // req.user contains the authenticated user, we send all the user info back
+      // this is coming from userDao.getUser() in LocalStrategy Verify Fn
+      return res.json(clientUserInfo(req));
     });
   })(req, res, next);
 });
 
-// POST /api/sessions/totp - verify TOTP code
-app.post('/api/sessions/totp', async (req, res) => {
-  const { code } = req.body;
-  
-  if (!req.session.pending2FA || !req.session.pendingUserId) {
-    return res.status(400).json({ error: 'No pending 2FA verification' });
+// POST /api/login-totp - TOTP verification following professor's pattern
+app.post('/api/login-totp', isAuthenticated,
+  passport.authenticate('totp'),   // passport expects the totp value to be in: body.code
+  function(req, res) {
+    req.session.method = 'totp';
+    res.json({otp: 'authorized'});
   }
-  
-  try {
-    // Use the secret from the exam specification
-    const secret = 'LXBSMDTMSP2I5XFXIYRGFVWSFI';
-    
-    const verified = speakeasy.totp.verify({
-      secret: secret,
-      encoding: 'base32',
-      token: code,
-      window: 2 // Allow some time drift
-    });
-    
-    if (verified) {
-      // Mark 2FA as verified
-      req.session.totpVerified = true;
-      req.session.pending2FA = false;
-      
-      const user = await UsersDAO.getUserById(req.session.pendingUserId);
-      delete req.session.pendingUserId;
-      
-      res.json({ 
-        message: '2FA verified successfully',
-        user: {
-          id: user.id,
-          name: user.username,
-          username: user.username,
-          isTotp: true
-        }
-      });
-    } else {
-      res.status(401).json({ error: 'Invalid TOTP code' });
-    }
-  } catch (err) {
-    console.error('TOTP verification error:', err);
-    res.status(500).json({ error: 'TOTP verification failed' });
-  }
-});
+);
 
-// POST /api/sessions/skip-totp - skip TOTP verification and proceed without 2FA
-app.post('/api/sessions/skip-totp', async (req, res) => {
-  if (!req.session.pending2FA || !req.session.pendingUserId) {
-    return res.status(400).json({ error: 'No pending 2FA verification' });
-  }
-  
-  try {
-    // Mark as skipped 2FA (not verified but allowed to proceed)
-    req.session.totpVerified = false;
-    req.session.pending2FA = false;
-    
-    const user = await UsersDAO.getUserById(req.session.pendingUserId);
-    delete req.session.pendingUserId;
-    
-    res.json({ 
-      message: 'Proceeded without 2FA',
-      user: {
-        id: user.id,
-        name: user.username,
-        username: user.username,
-        isTotp: false
-      }
-    });
-  } catch (err) {
-    console.error('Skip TOTP error:', err);
-    res.status(500).json({ error: 'Failed to skip TOTP' });
-  }
-});
-
-// GET /api/sessions/current - get current user
+// GET /api/sessions/current - get current user following professor's pattern
 app.get('/api/sessions/current', (req, res) => {
-  if (req.isAuthenticated()) {
-    res.json({ 
-      id: req.user.id, 
-      name: req.user.username,
-      username: req.user.username, 
-      isTotp: req.session.totpVerified || false 
-    });
+  if(req.isAuthenticated()) {
+    res.status(200).json(clientUserInfo(req));
   } else {
-    res.status(401).json({ error: 'Not authenticated' });
+    res.status(401).json({error: 'Not authenticated'});
   }
 });
 
-// DELETE /api/sessions/current - logout
+// DELETE /api/sessions/current - logout following professor's pattern
 app.delete('/api/sessions/current', (req, res) => {
-  req.logout((err) => {
-    if (err) return res.status(500).json({ error: 'Logout failed' });
-    req.session.destroy((err) => {
-      if (err) return res.status(500).json({ error: 'Session destruction failed' });
-      res.json({ message: 'Logged out successfully' });
-    });
+  req.logout(() => {
+    res.status(200).json({});
   });
 });
 

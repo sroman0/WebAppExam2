@@ -26,54 +26,53 @@ function App() {
       .catch(() => setUser(null));
   }, []);
 
-  // Handle login
+  // Handle login - following professor's pattern
   async function handleLogin(credentials) {
     try {
-      const res = await API.logIn(credentials);
-      if (res.canDoTotp) {
+      const user = await API.logIn(credentials);
+      // After successful login, user is logged in but may want to use TOTP
+      if (user.canDoTotp) {
+        setUser(user);
         setTotpRequired(true);
-        setPendingUser(res.user);
         setMessage('');
+        // Don't navigate yet, show TOTP option
       } else {
-        setUser(res.user);
+        setUser(user);
         setMessage('');
         navigate('/');
       }
     } catch (err) {
       setUser(null);
       setTotpRequired(false);
-      setPendingUser(null);
       setMessage('');
       throw new Error(err.error || 'Login failed. Please check your credentials.');
     }
   }
 
-  // Handle TOTP verification
+  // Handle TOTP verification - following professor's pattern
   async function handleTotp(code) {
     try {
-      await API.logInTotp(code);
+      await API.totpVerify(code);
+      // After successful TOTP, get updated user info
       const u = await API.getUserInfo();
       setUser(u);
       setTotpRequired(false);
-      setPendingUser(null);
-      setMessage('');
+      setMessage('2FA authentication successful!', 'success');
       navigate('/');
     } catch (err) {
       throw new Error(err.error || 'Invalid TOTP code. Please try again.');
     }
   }
 
-  // Handle skipping TOTP
+  // Handle skipping TOTP - user continues without 2FA
   async function handleSkipTotp() {
     try {
-      const res = await API.skipTotp();
-      setUser(res.user);
+      // Simply proceed without TOTP verification
       setTotpRequired(false);
-      setPendingUser(null);
       setMessage('');
       navigate('/');
     } catch (err) {
-      throw new Error(err.error || 'Failed to skip 2FA. Please try again.');
+      throw new Error('Failed to continue. Please try again.');
     }
   }
 
@@ -82,7 +81,6 @@ function App() {
     await API.logOut();
     setUser(null);
     setTotpRequired(false);
-    setPendingUser(null);
     setMessage('');
     navigate('/login');
   }
@@ -95,13 +93,13 @@ function App() {
   };
 
   return (
-    <div className="min-vh-100" style={{ background: 'linear-gradient(135deg, #ff6b6b 0%, #ffa500 50%, #ff4757 100%)' }}>
+    <div className="min-vh-100 app-background">
       <NavigationBar user={user} onLogout={handleLogout} />
       
       <div className="main-content">
         <Container fluid className="px-3 py-4">
           {message && (
-            <Alert variant={messageType} className="mb-4 shadow-sm" style={{ borderRadius: '15px' }}>
+            <Alert variant={messageType} className="mb-4 shadow-sm rounded-4">
               {message}
             </Alert>
           )}

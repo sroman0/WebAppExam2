@@ -44,7 +44,7 @@ function OrderHistory({ user, showMessage }) {
 
     setCancelling(true);
     try {
-      await API.cancelOrder(selectedOrder.id);
+      await API.deleteOrder(selectedOrder.id);
       showMessage('Order cancelled successfully!', 'success');
       
       // Refresh orders
@@ -90,11 +90,8 @@ function OrderHistory({ user, showMessage }) {
     <>
       <Row>
         <Col>
-          <Card className="border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-            <Card.Header className="text-white border-0" style={{ 
-              background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', 
-              borderRadius: '15px 15px 0 0' 
-            }}>
+          <Card className="border-0 shadow-lg rounded-4">
+            <Card.Header className="text-white border-0 card-header-gradient">
               <h5 className="mb-0 fw-bold">
                 <i className="bi bi-clock-history me-2"></i>
                 Your Order History
@@ -109,7 +106,7 @@ function OrderHistory({ user, showMessage }) {
                   <Button 
                     variant="primary" 
                     onClick={() => navigate('/order')}
-                    style={{ borderRadius: '20px' }}
+                    className="rounded-pill"
                   >
                     <i className="bi bi-cart-plus me-2"></i>
                     Make an Order
@@ -119,7 +116,7 @@ function OrderHistory({ user, showMessage }) {
                 <Row>
                   {orders.map(order => (
                     <Col md={6} lg={4} key={order.id} className="mb-4">
-                      <Card className="h-100 border-2" style={{ borderRadius: '10px', borderColor: '#ff6b6b' }}>
+                      <Card className="h-100 dish-card">
                         <Card.Body className="p-3">
                           <div className="d-flex justify-content-between align-items-start mb-2">
                             <Badge 
@@ -161,7 +158,7 @@ function OrderHistory({ user, showMessage }) {
                               variant="outline-primary" 
                               size="sm"
                               onClick={() => handleViewDetails(order)}
-                              style={{ borderRadius: '20px' }}
+                              className="rounded-pill"
                             >
                               <i className="bi bi-eye me-1"></i>
                               View Details
@@ -175,7 +172,7 @@ function OrderHistory({ user, showMessage }) {
                                   setSelectedOrder(order);
                                   setShowCancelConfirm(true);
                                 }}
-                                style={{ borderRadius: '20px' }}
+                                className="rounded-pill"
                               >
                                 <i className="bi bi-x-circle me-1"></i>
                                 Cancel Order
@@ -195,7 +192,7 @@ function OrderHistory({ user, showMessage }) {
 
       {/* Order Details Modal */}
       <Modal show={showDetails} onHide={() => setShowDetails(false)} size="lg" centered>
-        <Modal.Header closeButton style={{ background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', color: 'white', border: 'none' }}>
+        <Modal.Header closeButton className="modal-header-gradient-danger">
           <Modal.Title>
             <i className="bi bi-receipt me-2"></i>
             Order Details #{selectedOrder?.id}
@@ -255,7 +252,7 @@ function OrderHistory({ user, showMessage }) {
           )}
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button variant="outline-secondary" onClick={() => setShowDetails(false)} style={{ borderRadius: '20px' }}>
+          <Button variant="outline-secondary" onClick={() => setShowDetails(false)} className="rounded-pill">
             Close
           </Button>
           {selectedOrder && canCancelOrder(selectedOrder) && (
@@ -265,7 +262,7 @@ function OrderHistory({ user, showMessage }) {
                 setShowDetails(false);
                 setShowCancelConfirm(true);
               }}
-              style={{ borderRadius: '20px' }}
+              className="rounded-pill"
             >
               <i className="bi bi-x-circle me-1"></i>
               Cancel Order
@@ -279,9 +276,9 @@ function OrderHistory({ user, showMessage }) {
         show={showCancelConfirm} 
         onHide={() => setShowCancelConfirm(false)} 
         centered
-        style={{ zIndex: 1055 }}
+        className="modal-high-z"
       >
-        <Modal.Header closeButton style={{ background: 'linear-gradient(90deg, #dc3545 0%, #c82333 100%)', color: 'white', border: 'none' }}>
+        <Modal.Header closeButton className="modal-header-gradient-red">
           <Modal.Title>
             <i className="bi bi-exclamation-triangle-fill me-2"></i>
             Cancel Order
@@ -305,7 +302,7 @@ function OrderHistory({ user, showMessage }) {
           <Button 
             variant="outline-secondary" 
             onClick={() => setShowCancelConfirm(false)} 
-            style={{ borderRadius: '20px', zIndex: 1060, position: 'relative' }}
+            className="rounded-pill modal-button-high-z"
           >
             Keep Order
           </Button>
@@ -313,7 +310,7 @@ function OrderHistory({ user, showMessage }) {
             variant="danger" 
             onClick={handleCancelOrder}
             disabled={cancelling}
-            style={{ borderRadius: '20px', zIndex: 1060, position: 'relative' }}
+            className="rounded-pill modal-button-high-z"
           >
             {cancelling ? (
               <>

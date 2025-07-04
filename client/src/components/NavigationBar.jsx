@@ -6,13 +6,10 @@ function NavigationBar({ user, onLogout }) {
 
   return (
     <Navbar 
-      style={{ 
-        background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)'
-      }} 
+      className="shadow-lg navbar-fixed navbar-gradient" 
       variant="dark" 
       expand="lg" 
-      fixed="top" 
-      className="shadow-lg navbar-fixed"
+      fixed="top"
     >
       <Container>
         <Navbar.Brand href="/" className="fw-bold fs-4">
@@ -47,13 +44,13 @@ function NavigationBar({ user, onLogout }) {
                   Welcome, <span className="fw-bold">{user.name}</span>
                   {user.isTotp && <span className="badge bg-success text-dark ms-2">2FA</span>}
                 </Nav.Link>
-                <Button variant="outline-light" onClick={onLogout} style={{ borderRadius: '20px' }}>
+                <Button variant="outline-light" onClick={onLogout} className="rounded-pill">
                   <i className="bi bi-box-arrow-right me-1"></i>
                   Logout
                 </Button>
               </>
             ) : (
-              <Button variant="outline-light" onClick={() => navigate('/login')} style={{ borderRadius: '20px' }}>
+              <Button variant="outline-light" onClick={() => navigate('/login')} className="rounded-pill">
                 <i className="bi bi-box-arrow-in-right me-1"></i>
                 Login
               </Button>

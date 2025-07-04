@@ -13,7 +13,7 @@ function NotFoundLayout() {
   return (
     <Row className="justify-content-center mt-5">
       <Col xs={12} md={8} className="text-center">
-        <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+        <div className="card shadow-lg border-0 card-transparent">
           <div className="card-body p-5">
             <h2 className="text-danger mb-4 fw-bold">404 - Page Not Found</h2>
             <p className="lead text-muted mb-4">
@@ -24,7 +24,7 @@ function NotFoundLayout() {
                 <Button 
                   variant="primary" 
                   size="lg" 
-                  style={{ borderRadius: '25px' }}
+                  className="rounded-pill"
                 >
                   <i className="bi bi-house-fill me-2"></i>
                   Go to Menu
@@ -58,7 +58,7 @@ function LoginLayout({ onLogin, totpRequired, onTotp, onSkipTotp, user }) {
   return (
     <Row className="justify-content-center">
       <Col xs={12} sm={10} md={8} lg={5}>
-        <div className="card shadow-lg border-0" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+        <div className="card shadow-lg border-0 card-transparent">
           <div className="card-body">
             <LoginForm 
               onLogin={onLogin} 
@@ -83,9 +83,9 @@ function MenuLayout({ user, showMessage }) {
       {/* Welcome Section */}
       <Row className="mb-4 page-header">
         <Col>
-          <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+          <div className="card border-0 shadow-lg card-transparent">
             <div className="card-body p-4 text-center">
-              <h2 className="fw-bold mb-3" style={{ color: '#ff4757' }}>
+              <h2 className="fw-bold mb-3 text-primary-custom">
                 <i className="bi bi-shop me-2"></i>
                 Welcome to Our Restaurant
               </h2>
@@ -98,7 +98,7 @@ function MenuLayout({ user, showMessage }) {
                     variant="primary" 
                     size="lg"
                     onClick={() => navigate('/order')}
-                    style={{ borderRadius: '25px', background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', border: 'none' }}
+                    className="btn-gradient-primary"
                   >
                     <i className="bi bi-cart-plus me-2"></i>
                     Start Your Order
@@ -107,7 +107,7 @@ function MenuLayout({ user, showMessage }) {
                     variant="outline-primary" 
                     size="lg"
                     onClick={() => navigate('/orders')}
-                    style={{ borderRadius: '25px', borderColor: '#ff4757', color: '#ff4757' }}
+                    className="btn-outline-primary-custom"
                   >
                     <i className="bi bi-clock-history me-2"></i>
                     View My Orders
@@ -119,7 +119,7 @@ function MenuLayout({ user, showMessage }) {
                     variant="primary" 
                     size="lg"
                     onClick={() => navigate('/login')}
-                    style={{ borderRadius: '25px', background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', border: 'none' }}
+                    className="btn-gradient-primary"
                   >
                     <i className="bi bi-box-arrow-in-right me-2"></i>
                     Login to Order
@@ -163,9 +163,9 @@ function OrderLayout({ user, showMessage }) {
       {/* Header */}
       <Row className="mb-4 page-header">
         <Col>
-          <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+          <div className="card border-0 shadow-lg card-transparent">
             <div className="card-body p-4 text-center">
-              <h2 className="fw-bold mb-2" style={{ color: '#ff4757' }}>
+              <h2 className="fw-bold mb-2 text-primary-custom">
                 <i className="bi bi-cart-plus me-2"></i>
                 Configure Your Order
               </h2>
@@ -209,9 +209,9 @@ function OrderHistoryLayout({ user, showMessage }) {
       {/* Header */}
       <Row className="mb-4 page-header">
         <Col>
-          <div className="card border-0 shadow-lg" style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '15px' }}>
+          <div className="card border-0 shadow-lg card-transparent">
             <div className="card-body p-4 text-center">
-              <h2 className="fw-bold mb-2" style={{ color: '#ff4757' }}>
+              <h2 className="fw-bold mb-2 text-primary-custom">
                 <i className="bi bi-clock-history me-2"></i>
                 Your Order History
               </h2>

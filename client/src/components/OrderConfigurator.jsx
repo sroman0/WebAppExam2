@@ -245,7 +245,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
         ingredients: selectedIngredients
       };
       
-      await API.createOrder(order);
+      await API.addOrder(order);
       showMessage('Order submitted successfully!', 'success');
       setShowConfirm(false);
       
@@ -282,19 +282,16 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
       <Row>
         {/* Left Side - Ingredients List */}
         <Col lg={6} className="mb-4">
-          <Card className="h-100 border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-            <Card.Header className="text-white border-0" style={{ 
-              background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', 
-              borderRadius: '15px 15px 0 0' 
-            }}>
+          <Card className="h-100 border-0 shadow-lg rounded-4">
+            <Card.Header className="text-white border-0 card-header-gradient">
               <h5 className="mb-0 fw-bold">
                 <i className="bi bi-plus-circle-fill me-2"></i>
                 Available Ingredients
               </h5>
             </Card.Header>
-            <Card.Body className="p-4" style={{ maxHeight: '600px', overflowY: 'auto' }}>
+            <Card.Body className="p-4 card-body-scrollable">
               {constraintError && (
-                <Alert variant="warning" className="mb-3" style={{ borderRadius: '10px' }}>
+                <Alert variant="warning" className="mb-3 rounded-3">
                   <i className="bi bi-exclamation-triangle-fill me-2"></i>
                   {constraintError}
                 </Alert>
@@ -379,10 +376,10 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
 
         {/* Right Side - Order Configuration */}
         <Col lg={6} className="mb-4">
-          <div className="position-sticky" style={{ top: '100px' }}>
+          <div className="position-sticky sticky-order-summary">
             {/* Total Price */}
-            <Card className="mb-3 border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-              <Card.Body className="text-center p-4" style={{ background: 'linear-gradient(90deg, #28a745 0%, #20c997 100%)', borderRadius: '15px' }}>
+            <Card className="mb-3 border-0 shadow-lg rounded-4">
+              <Card.Body className="text-center p-4 card-body-success-gradient">
                 <h3 className="text-white mb-0 fw-bold">
                   <i className="bi bi-currency-euro me-2"></i>
                   Total: €{getTotalPrice().toFixed(2)}
@@ -391,11 +388,8 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
             </Card>
 
             {/* Order Configuration */}
-            <Card className="border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-              <Card.Header className="text-white border-0" style={{ 
-                background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', 
-                borderRadius: '15px 15px 0 0' 
-              }}>
+            <Card className="border-0 shadow-lg rounded-4">
+              <Card.Header className="text-white border-0 card-header-gradient">
                 <h5 className="mb-0 fw-bold">
                   <i className="bi bi-gear-fill me-2"></i>
                   Your Order
@@ -408,7 +402,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
                   <Form.Select 
                     value={selectedDish?.id || ''} 
                     onChange={(e) => setSelectedDish(dishes.find(d => d.id === parseInt(e.target.value)))}
-                    style={{ borderRadius: '10px' }}
+                    className="rounded-3"
                   >
                     {dishes.map(dish => (
                       <option key={dish.id} value={dish.id}>
@@ -427,8 +421,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
                         key={size}
                         variant={selectedSize === size ? "primary" : "outline-primary"}
                         onClick={() => handleSizeChange(size)}
-                        className="flex-fill"
-                        style={{ borderRadius: '10px' }}
+                        className="flex-fill rounded-3"
                       >
                         {size.charAt(0).toUpperCase() + size.slice(1)}<br/>
                         <small>€{info.price} (max {info.maxIngredients})</small>
@@ -464,12 +457,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
                     size="lg"
                     onClick={() => setShowConfirm(true)}
                     disabled={!selectedDish}
-                    className="fw-bold border-0 shadow-sm"
-                    style={{ 
-                      borderRadius: '10px',
-                      background: 'linear-gradient(90deg, #28a745 0%, #20c997 100%)',
-                      padding: '12px'
-                    }}
+                    className="fw-bold border-0 shadow-sm btn-gradient-primary"
                   >
                     <i className="bi bi-cart-check me-2"></i>
                     Submit Order
@@ -483,7 +471,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
 
       {/* Confirmation Modal */}
       <Modal show={showConfirm} onHide={() => setShowConfirm(false)} centered>
-        <Modal.Header closeButton style={{ background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', color: 'white', border: 'none' }}>
+        <Modal.Header closeButton className="modal-header-gradient-danger">
           <Modal.Title>
             <i className="bi bi-cart-check me-2"></i>
             Confirm Your Order
@@ -513,14 +501,14 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
           </div>
         </Modal.Body>
         <Modal.Footer className="border-0">
-          <Button variant="outline-secondary" onClick={() => setShowConfirm(false)} style={{ borderRadius: '20px' }}>
+          <Button variant="outline-secondary" onClick={() => setShowConfirm(false)} className="rounded-pill">
             Cancel
           </Button>
           <Button 
             variant="success" 
             onClick={handleSubmitOrder}
             disabled={submitting}
-            style={{ borderRadius: '20px' }}
+            className="rounded-pill"
           >
             {submitting ? (
               <>

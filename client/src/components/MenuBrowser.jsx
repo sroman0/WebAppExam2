@@ -41,11 +41,8 @@ function MenuBrowser({ showMessage }) {
     <Row>
       {/* Base Dishes */}
       <Col md={6} className="mb-4">
-        <Card className="h-100 border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-          <Card.Header className="text-white border-0" style={{ 
-            background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', 
-            borderRadius: '15px 15px 0 0' 
-          }}>
+        <Card className="h-100 border-0 shadow-lg rounded-4">
+          <Card.Header className="text-white border-0 card-header-gradient">
             <h5 className="mb-0 fw-bold">
               <i className="bi bi-grid-3x3-gap-fill me-2"></i>
               Base Dishes
@@ -55,11 +52,10 @@ function MenuBrowser({ showMessage }) {
             <Row>
               {dishes.map(dish => (
                 <Col md={4} key={dish.id} className="mb-3">
-                  <Card className="text-center border-2" style={{ borderRadius: '10px', borderColor: '#ff6b6b' }}>
+                  <Card className="text-center dish-card">
                     <Card.Body className="p-3">
                       <div className="mb-2">
-                        <i className={`bi ${dish.name === 'pizza' ? 'bi-circle' : dish.name === 'pasta' ? 'bi-egg-fried' : 'bi-flower1'} display-6`} 
-                           style={{ color: '#ff4757' }}></i>
+                        <i className={`bi ${dish.name === 'pizza' ? 'bi-circle' : dish.name === 'pasta' ? 'bi-egg-fried' : 'bi-flower1'} display-6 text-primary-custom`}></i>
                       </div>
                       <h6 className="fw-bold text-capitalize">{dish.name}</h6>
                       <div className="mt-2">
@@ -78,17 +74,14 @@ function MenuBrowser({ showMessage }) {
 
       {/* Ingredients */}
       <Col md={6} className="mb-4">
-        <Card className="h-100 border-0 shadow-lg" style={{ borderRadius: '15px' }}>
-          <Card.Header className="text-white border-0" style={{ 
-            background: 'linear-gradient(90deg, #ff4757 0%, #ff6b6b 100%)', 
-            borderRadius: '15px 15px 0 0' 
-          }}>
+        <Card className="h-100 border-0 shadow-lg rounded-4">
+          <Card.Header className="text-white border-0 card-header-gradient">
             <h5 className="mb-0 fw-bold">
               <i className="bi bi-plus-circle-fill me-2"></i>
               Available Ingredients
             </h5>
           </Card.Header>
-          <Card.Body className="p-4" style={{ maxHeight: '500px', overflowY: 'auto' }}>
+          <Card.Body className="p-4 card-body-scrollable-menu">
             <ListGroup variant="flush">
               {ingredients.map(ingredient => (
                 <ListGroup.Item key={ingredient.id} className="border-0 px-0">
