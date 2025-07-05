@@ -34,6 +34,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
     if (errorMessage) setErrorMessage('');
   };
 
+  
   const handlePasswordChange = (e) => {
     setPassword(e.target.value);
     if (errorMessage) setErrorMessage('');

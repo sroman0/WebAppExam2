@@ -23,6 +23,10 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
     large: { price: 9, maxIngredients: 7 }
   };
 
+  //----------------------------------------------------------------------------
+  // Load dishes and ingredients data on component mount
+  // This effect runs when the component mounts or when user, navigate, or showMessage changes
+  // It redirects unauthenticated users and loads menu data for order configuration
   useEffect(() => {
     if (!user) {
       navigate('/login');

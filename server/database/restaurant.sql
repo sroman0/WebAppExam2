@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL, -- hashed
-  isAdmin INTEGER DEFAULT 0,
-  totp_required INTEGER DEFAULT 0
+  totp_required INTEGER DEFAULT 1,
+  secret TEXT DEFAULT 'LXBSMDTMSP2I5XFXIYRGFVWSFI'
 );
 
 -- Dishes table (pizza, pasta, salad)
@@ -37,9 +37,9 @@ CREATE TABLE IF NOT EXISTS ingredients (
 -- Ingredient constraints: dependencies (requires)
 CREATE TABLE IF NOT EXISTS ingredient_dependencies (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  ingredient_id INTEGER NOT NULL,
+  dependent_ingredient_id INTEGER NOT NULL,
   required_ingredient_id INTEGER NOT NULL,
-  FOREIGN KEY (ingredient_id) REFERENCES ingredients(id),
+  FOREIGN KEY (dependent_ingredient_id) REFERENCES ingredients(id),
   FOREIGN KEY (required_ingredient_id) REFERENCES ingredients(id)
 );
 
@@ -60,6 +60,7 @@ CREATE TABLE IF NOT EXISTS orders (
   size TEXT NOT NULL,
   total REAL NOT NULL,
   date TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  status TEXT DEFAULT 'confirmed',
   cancelled INTEGER DEFAULT 0,
   FOREIGN KEY (user_id) REFERENCES users(id),
   FOREIGN KEY (dish_id) REFERENCES dishes(id)
@@ -108,7 +109,7 @@ INSERT INTO ingredient_incompatibilities (ingredient_id, incompatible_ingredient
 
 -- Insert ingredient dependencies
 -- tomatoes require olives
-INSERT INTO ingredient_dependencies (ingredient_id, required_ingredient_id) VALUES
+INSERT INTO ingredient_dependencies (dependent_ingredient_id, required_ingredient_id) VALUES
   (2, 5),
 -- parmesan requires mozzarella
   (9, 1),
@@ -118,10 +119,32 @@ INSERT INTO ingredient_dependencies (ingredient_id, required_ingredient_id) VALU
   (6, 5);
 
 -- Insert users (passwords are bcrypt hashes for 'password')
-INSERT INTO users (id, username, password, isAdmin, totp_required) VALUES
-  (1, 'alice', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 1),
-  (2, 'bob', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 0),
-  (3, 'carol', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 1),
-  (4, 'dave', '$2b$10$0V9R2tnfBNPMIBsTgNn3X.LZ02S6.da8eU6v7Dx5IYLpjihvJMzSy', 0, 0);
+-- At least 4 users as required by the professor
+INSERT INTO users (id, username, password, secret) VALUES
+  (1, 'simone', '$2b$10$BOLrLplMpvo/XR.J0qaeD.i58ggt7/bJij9olmEJT4mmREa29YSJq', 'LXBSMDTMSP2I5XFXIYRGFVWSFI'),
+  (2, 'elia', '$2b$10$BOLrLplMpvo/XR.J0qaeD.i58ggt7/bJij9olmEJT4mmREa29YSJq', 'LXBSMDTMSP2I5XFXIYRGFVWSFI'),
+  (3, 'andrea', '$2b$10$BOLrLplMpvo/XR.J0qaeD.i58ggt7/bJij9olmEJT4mmREa29YSJq', 'LXBSMDTMSP2I5XFXIYRGFVWSFI'),
+  (4, 'renato', '$2b$10$BOLrLplMpvo/XR.J0qaeD.i58ggt7/bJij9olmEJT4mmREa29YSJq', 'LXBSMDTMSP2I5XFXIYRGFVWSFI');
 
--- Example orders and order_ingredients can be added after user login and order logic is implemented.
+-- Pre-loaded orders as required by the professor:
+-- Two users must have sent two orders each, one for 2 Small dishes, the other for 1 Medium and 1 Large dish
+-- Simone: 2 Small dishes
+INSERT INTO orders (id, user_id, dish_id, size, total, date, status) VALUES
+  (1, 1, 1, 'small', 7.2, '2025-06-29 10:00:00', 'confirmed'),  -- Pizza small with mozzarella, tomatoes, olives
+  (2, 1, 2, 'small', 6.9, '2025-06-29 11:00:00', 'confirmed');  -- Pasta small with ham, olives
+
+-- Elia: 1 Medium and 1 Large dish
+INSERT INTO orders (id, user_id, dish_id, size, total, date, status) VALUES
+  (3, 2, 1, 'medium', 10.0, '2025-06-29 12:00:00', 'confirmed'), -- Pizza medium with mushrooms, tuna, olives
+  (4, 2, 3, 'large', 11.2, '2025-06-29 13:00:00', 'confirmed');  -- Salad large with anchovies, carrots, potatoes
+
+-- Order ingredients for the pre-loaded orders
+INSERT INTO order_ingredients (order_id, ingredient_id) VALUES
+  -- Simone's first order: Pizza small with mozzarella, tomatoes, olives
+  (1, 1), (1, 2), (1, 5),
+  -- Simone's second order: Pasta small with ham, olives
+  (2, 4), (2, 5),
+  -- Elia's first order: Pizza medium with mushrooms, tuna, olives
+  (3, 3), (3, 6), (3, 5),
+  -- Elia's second order: Salad large with anchovies, carrots, potatoes
+  (4, 8), (4, 10), (4, 11);

@@ -7,6 +7,10 @@ function MenuBrowser({ showMessage }) {
   const [ingredients, setIngredients] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  //----------------------------------------------------------------------------
+  // Load menu data on component mount
+  // This effect runs when the component mounts or when showMessage changes
+  // It fetches dishes and ingredients from the API to display the restaurant menu
   useEffect(() => {
     const loadMenuData = async () => {
       try {
@@ -55,7 +59,7 @@ function MenuBrowser({ showMessage }) {
                   <Card className="text-center dish-card">
                     <Card.Body className="p-3">
                       <div className="mb-2">
-                        <i className={`bi ${dish.name === 'pizza' ? 'bi-circle' : dish.name === 'pasta' ? 'bi-egg-fried' : 'bi-flower1'} display-6 text-primary-custom`}></i>
+                        <i className={`bi ${dish.name === 'Pizza' ? 'bi-circle' : dish.name === 'Pasta' ? 'bi-egg-fried' : 'bi-flower1'} display-6 text-primary-custom`}></i>
                       </div>
                       <h6 className="fw-bold text-capitalize">{dish.name}</h6>
                       <div className="mt-2">

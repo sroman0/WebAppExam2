@@ -128,7 +128,10 @@ function MenuLayout({ user, showMessage }) {
 function OrderLayout({ user, showMessage }) {
   const navigate = useNavigate();
 
-  // Redirect unauthenticated users to login
+  //----------------------------------------------------------------------------
+  // Redirect unauthenticated users to login page
+  // This effect runs when the component mounts or when user/navigate changes
+  // It ensures only authenticated users can access the order creation flow
   useEffect(() => {
     if (!user) {
       navigate('/login', { replace: true });
@@ -178,7 +181,10 @@ function OrderLayout({ user, showMessage }) {
 function OrderHistoryLayout({ user, showMessage }) {
   const navigate = useNavigate();
 
-  // Redirect unauthenticated users to login
+  //----------------------------------------------------------------------------
+  // Redirect unauthenticated users to login page
+  // This effect runs when the component mounts or when user/navigate changes
+  // It ensures only authenticated users can access their order history
   useEffect(() => {
     if (!user) {
       navigate('/login', { replace: true });

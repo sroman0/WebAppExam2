@@ -14,6 +14,10 @@ function OrderHistory({ user, showMessage }) {
 
   const navigate = useNavigate();
 
+  //----------------------------------------------------------------------------
+  // Load orders on component mount and redirect if not authenticated
+  // This effect runs when the component mounts or when user, navigate, or showMessage changes
+  // It checks authentication and loads the user's order history from the API
   useEffect(() => {
     if (!user) {
       navigate('/login');
