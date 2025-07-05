@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import API from '../API';
 
 function OrderConfigurator({ user, showMessage, onOrderComplete }) {
+  // State variables
   const [dishes, setDishes] = useState([]);
   const [ingredients, setIngredients] = useState([]);
   const [selectedDish, setSelectedDish] = useState(null);
