@@ -250,7 +250,9 @@ app.post('/api/orders', isLoggedIn, [
     for (const ingredient of selectedIngredients) {
       if (ingredient.availability !== null && ingredient.availability <= 0) {
         return res.status(400).json({ 
-          error: `Not enough ${ingredient.name} available` 
+          error: `${ingredient.name} is currently out of stock (0 available)`,
+          unavailable_ingredient: ingredient.name,
+          current_availability: ingredient.availability
         });
       }
     }

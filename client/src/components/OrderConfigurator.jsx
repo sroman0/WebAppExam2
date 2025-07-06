@@ -54,6 +54,62 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
     loadData();
   }, [user, navigate, showMessage]);
 
+  //----------------------------------------------------------------------------
+  // Refresh ingredients data when component becomes visible
+  // This ensures users see updated availability when navigating between pages
+  useEffect(() => {
+    const refreshIngredients = async () => {
+      if (!user || loading) return;
+      
+      try {
+        const updatedIngredients = await API.getIngredients();
+        setIngredients(updatedIngredients);
+        
+        // Check if any selected ingredients are no longer available and remove them
+        const stillAvailableIngredients = selectedIngredients.filter(selectedId => {
+          const ingredient = updatedIngredients.find(ing => ing.id === selectedId);
+          return !ingredient || ingredient.availability === null || ingredient.availability > 0;
+        });
+        
+        if (stillAvailableIngredients.length !== selectedIngredients.length) {
+          setSelectedIngredients(stillAvailableIngredients);
+          const removedCount = selectedIngredients.length - stillAvailableIngredients.length;
+          showMessage(`${removedCount} ingredient(s) were removed due to availability changes`, 'info');
+        }
+      } catch (error) {
+        console.log('Error refreshing ingredients:', error);
+      }
+    };
+
+    // Set up a visibility change listener to refresh when page becomes visible
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshIngredients();
+      }
+    };
+
+    // Set up periodic refresh every 15 seconds for real-time updates
+    const refreshInterval = setInterval(() => {
+      if (!document.hidden) {
+        refreshIngredients();
+      }
+    }, 15000);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    // Also refresh when component mounts (after initial load)
+    if (!loading && ingredients.length > 0) {
+      refreshIngredients();
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(refreshInterval);
+    };
+  }, [user, loading, selectedIngredients, ingredients.length, showMessage]);
+
+
+
   // Calculate total price
   const getTotalPrice = () => {
     const basePrice = sizeInfo[selectedSize].price;
@@ -244,6 +300,40 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
     setSelectedSize(newSize);
   };
 
+  // Handle order submission confirmation with pre-check
+  const handleOrderSubmit = async () => {
+    // First, refresh ingredients to ensure we have the latest availability
+    try {
+      const freshIngredients = await API.getIngredients();
+      setIngredients(freshIngredients);
+      
+      // Check if any selected ingredients are no longer available
+      const unavailableIngredients = [];
+      const stillAvailableIngredients = [];
+      
+      for (const selectedId of selectedIngredients) {
+        const ingredient = freshIngredients.find(ing => ing.id === selectedId);
+        if (ingredient && ingredient.availability !== null && ingredient.availability <= 0) {
+          unavailableIngredients.push(ingredient.name);
+        } else {
+          stillAvailableIngredients.push(selectedId);
+        }
+      }
+      
+      // If some ingredients became unavailable, update selection and warn user
+      if (unavailableIngredients.length > 0) {
+        setSelectedIngredients(stillAvailableIngredients);
+        showMessage(`The following ingredients became unavailable and were removed: ${unavailableIngredients.join(', ')}. Please review your order and try again.`, 'warning');
+        return;
+      }
+      
+      // All ingredients are still available, proceed with confirmation
+      setShowConfirm(true);
+    } catch (error) {
+      showMessage('Error checking ingredient availability. Please try again.', 'danger');
+    }
+  };
+
   // Handle order submission
   const handleSubmitOrder = async () => {
     setSubmitting(true);
@@ -264,7 +354,43 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
         navigate('/orders');
       }
     } catch (error) {
-      showMessage(error.error || 'Error submitting order');
+      // Handle order failure - refresh ingredients and provide detailed feedback
+      try {
+        // Refresh ingredients data to get updated availability
+        const updatedIngredients = await API.getIngredients();
+        setIngredients(updatedIngredients);
+        
+        // Analyze which ingredients became unavailable
+        const unavailableIngredients = [];
+        const stillAvailableIngredients = [];
+        
+        for (const selectedId of selectedIngredients) {
+          const updatedIngredient = updatedIngredients.find(ing => ing.id === selectedId);
+          if (updatedIngredient && updatedIngredient.availability !== null && updatedIngredient.availability <= 0) {
+            unavailableIngredients.push(updatedIngredient.name);
+          } else {
+            stillAvailableIngredients.push(selectedId);
+          }
+        }
+        
+        // Update selected ingredients to remove unavailable ones
+        if (unavailableIngredients.length > 0) {
+          setSelectedIngredients(stillAvailableIngredients);
+          
+          // Create a detailed error message
+          const errorMessage = error.error || 'Order failed due to ingredient availability';
+          const detailMessage = `The following ingredients became unavailable and were removed from your order: ${unavailableIngredients.join(', ')}. Please review your selection and try again.`;
+          
+          showMessage(`${errorMessage}. ${detailMessage}`, 'warning');
+        } else {
+          // No ingredients were unavailable, show original error
+          showMessage(error.error || 'Error submitting order', 'danger');
+        }
+      } catch (refreshError) {
+        // If refresh fails, just show the original error
+        showMessage(error.error || 'Error submitting order. Please try refreshing the page.', 'danger');
+      }
+      
       setShowConfirm(false);
     } finally {
       setSubmitting(false);
@@ -464,7 +590,7 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
                 <div className="d-grid">
                   <Button 
                     size="lg"
-                    onClick={() => setShowConfirm(true)}
+                    onClick={handleOrderSubmit}
                     disabled={!selectedDish}
                     className="fw-bold border-0 shadow-sm btn-gradient-primary"
                   >

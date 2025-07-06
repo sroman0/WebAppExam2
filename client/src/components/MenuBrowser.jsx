@@ -30,6 +30,44 @@ function MenuBrowser({ showMessage }) {
     loadMenuData();
   }, [showMessage]);
 
+  //----------------------------------------------------------------------------
+  // Refresh ingredients when page becomes visible (for multi-client updates)
+  useEffect(() => {
+    const refreshIngredients = async () => {
+      if (loading) return;
+      
+      try {
+        const updatedIngredients = await API.getIngredients();
+        setIngredients(updatedIngredients);
+      } catch (error) {
+        console.log('Error refreshing ingredients:', error);
+      }
+    };
+
+    // Set up a visibility change listener
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        refreshIngredients();
+      }
+    };
+
+    // Set up periodic refresh every 15 seconds for real-time updates
+    const refreshInterval = setInterval(() => {
+      if (!document.hidden) {
+        refreshIngredients();
+      }
+    }, 15000);
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      clearInterval(refreshInterval);
+    };
+  }, [loading]);
+
+
+
   if (loading) {
     return (
       <div className="text-center py-5">
