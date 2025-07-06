@@ -128,14 +128,16 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
     }
 
     // Check incompatibilities for the main ingredient
-    if (ingredient.incompatible) {
+    /*if (ingredient.incompatible) {
       for (const incompatible of ingredient.incompatible) {
         const incompatibleId = ingredients.find(i => i.name === incompatible)?.id;
         if (incompatibleId && selectedIngredients.includes(incompatibleId)) {
           return false;
         }
       }
-    }
+    }*/
+   // Removed incompatibility check - allow users to select incompatible ingredients
+   // Server will validate and return error on order submission
 
     return true;
   };
@@ -196,6 +198,8 @@ function OrderConfigurator({ user, showMessage, onOrderComplete }) {
             error = `${ingredient.name} is incompatible with ${conflicting}`;
           }
         }
+       // Removed incompatibility check - let server handle validation
+        
         
         setConstraintError(error);
         return;

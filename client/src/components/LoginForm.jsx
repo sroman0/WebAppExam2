@@ -144,14 +144,7 @@ function LoginForm({ onLogin, totpRequired, onTotp, onSkipTotp }) {
             </Button>
           )}
 
-          <Button 
-            variant="link" 
-            onClick={() => navigate('/')}
-            className="text-decoration-none text-primary-custom"
-          >
-            <i className="bi bi-arrow-left me-1"></i>
-            Back to Menu
-          </Button>
+          
         </div>
       </Form>
     </div>

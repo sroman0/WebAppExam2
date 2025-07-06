@@ -56,9 +56,9 @@ function App() {
     } else if (Array.isArray(err))
       msg = err[0].msg + " : " + err[0].path;
     else if (typeof err === "string") msg = String(err);
-    else msg = "Unknown Error";
+    else msg = "Username or password is incorrect";  // Default error message
 
-    setMessage(msg); // WARNING: a more complex application requires a queue of messages. In this example only the last error is shown.
+    setMessage(msg); 
     setMessageType('danger');
 
     if (msg === 'Not authenticated')

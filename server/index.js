@@ -37,7 +37,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 //----------------------------------------------------------------------------
-// Session management
+// Session management (using default MemoryStore as in lectures)
 app.use(session({
   secret: "secret",
   resave: false,
